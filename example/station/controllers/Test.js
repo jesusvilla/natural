@@ -1,9 +1,10 @@
 import { Controller, Accepts, Get, TypeJson } from '@natural/decorators'
 
+// Registered route: /test
 @Controller('test')
 class Test {
   // Without path
-  // Registered route: /test
+  // Registered route: /test/
   @Get()
   main () {
     // Return string, automatic detected by Natural

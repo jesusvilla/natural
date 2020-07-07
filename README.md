@@ -1,2 +1,103 @@
-# natural
-Fastest Framework for NodeJS. Written in pure ES6+
+# Natural
+
+Fastest Framework for Node.js. Written in pure javascript (ES6+)
+
+  - Created with the least possible code.
+  - Pure native HTTP Server.
+  - Based on Polka, Restana, Fastify, Express (for the creation of the Router).
+  - Based on NestJS (framework concepts and abstraction).
+
+## Requirements
+Node.js v10+
+
+## Installation
+
+> Available soon
+```
+$ npm install -S @natural
+```
+
+## Example
+> View examples folder
+
+```js
+import NaturalJS from '@natural/core'
+import station from './station'
+
+async function bootstrap () {
+  const app = new NaturalJS({
+    modules: {
+      station
+    }
+  })
+  const port = await app.listen(3000)
+  console.log(`Listen http://localhost:${port}`)
+}
+
+bootstrap()
+```
+
+## Definitions
+
+### Controller
+
+```js
+import { Controller, Accepts, Get, TypeJson } from '@natural/decorators'
+
+// Registered route: /test
+@Controller('test')
+class Test {
+  // Without path
+  // Registered route: /test/
+  @Get()
+  main () {
+    // Return string, automatic detected by Natural
+    return 'Welcome'
+  }
+
+  // With path
+  // Registered route: /test/simple
+  @Get('simple')
+  getSimple () {
+    // Return string
+    return 'Simple Main'
+  }
+
+  // With path, with params
+  // Registered route: /test/simple/:id
+  @Get('simple/:id')
+  // With arguments: id
+  @Accepts('id')
+  // Return type: json (application/json)
+  @TypeJson()
+  getSimpleId (id) {
+    return { id, type: typeof id }
+  }
+
+  // With path, with params
+  @Get('validator/:id')
+  // With arguments with validator: id (only type number)
+  @Accepts({ name: 'id', type: 'number' })
+  // Return type: json (application/json)
+  @TypeJson()
+  getIdWithValidator (id) {
+    return { id, type: typeof id }
+  }
+}
+
+export default Test
+```
+
+
+## Benchmarks
+> Comming soon...
+
+## ToDo
+
+ - Providers: Services, Models, ...
+ - Lambda functions...
+
+License
+----
+
+GPL-3.0 License
