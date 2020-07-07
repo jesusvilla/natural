@@ -1,0 +1,16 @@
+{
+  "comments": false,
+  "presets": [
+      ["@babel/preset-env", { "targets": { "node": 10 }}]
+  ],
+  "plugins": [
+      ["@babel/plugin-proposal-decorators", { "legacy": true }],
+      ["@babel/plugin-proposal-class-properties", { "loose" : true }],
+      ["module-resolver", {
+          "alias": {
+            "@natural/core": "./src/server",
+            "@natural/decorators": "./src/decorators"
+          }
+      }]
+  ]
+}

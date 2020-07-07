@@ -1,0 +1,34 @@
+{
+  "name": "natural",
+  "version": "1.0.0",
+  "description": "",
+  "main": "libs/server.js",
+  "scripts": {
+    "lint": "standard",
+    "dev": "nodemon --exec babel-node ./example/index.js",
+    "dev:debug": "nodemon --exec babel-node --inspect ./src/example/index.js",
+    "build": "cross-env BABEL_ENV=production babel src -d lib --copy-files",
+    "server": "cross-env NODE_ENV=production node ./lib/example/index.js",
+    "bench": "autocannon -c 100 -d 40 -p 10 localhost:3000/module1/developers/4"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/node": "^7.10.1",
+    "@babel/plugin-proposal-class-properties": "^7.10.1",
+    "@babel/plugin-proposal-decorators": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "autocannon": "^4.6.0",
+    "babel-eslint": "^10.1.0",
+    "babel-plugin-module-resolver": "^4.0.0",
+    "nodemon": "^2.0.4",
+    "standard": "^14.3.4"
+  },
+  "dependencies": {
+    "fastest-validator": "^1.4.2"
+  },
+  "standard": {
+    "parser": "babel-eslint"
+  }
+}
