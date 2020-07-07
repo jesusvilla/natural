@@ -68,6 +68,9 @@ http.ServerResponse.prototype.error = function (payload) {
     message: payload.message,
     data: payload.data
   })
+  if (process.env === 'development') {
+    console.error(payload)
+  }
 }
 
 /* const status = (res, code) => {
