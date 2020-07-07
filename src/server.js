@@ -50,6 +50,7 @@ export default class Server {
   registerController (router, ClassController) {
     const nameController = ClassController[META][META_NAME].name
     const acceptsController = ClassController[META][META_NAME].accepts || []
+    const hasAcceptsController = acceptsController.length !== 0
     const routerController = this.router.newRouter(nameController)
 
     if (ClassController[META].compiled !== true) {
@@ -58,7 +59,8 @@ export default class Server {
         configRoute.tags = [nameController, name]
         const accepts = configRoute.accepts || []
 
-        const hasParams = accepts.length !== 0 || accepts.find(a => a === Request || a === Response)
+        const hasParams = configRoute.params !== undefined
+        const hasAccepts = accepts.length !== 0
 
         let validatorParams
         if (hasParams) {
@@ -67,25 +69,36 @@ export default class Server {
         }
 
         configRoute.handler = (request, response) => {
-          const acceptsCtrl = acceptsController.map(name => {
-            if (name === Request) {
-              return request
-            } else if (name === Response) {
-              return response
-            }
-          })
-          const object = new ClassController(...acceptsCtrl) // new ClassController(request, response)
+          let object
+          if (hasAcceptsController) {
+            const acceptsCtrl = acceptsController.map(name => {
+              if (name === Request) {
+                return request
+              } else if (name === Response) {
+                return response
+              } else {
+                console.warn('No available params:', name)
+              }
+            })
+            object = new ClassController(...acceptsCtrl)
+          } else {
+            object = new ClassController()
+          }
 
           let res
 
-          if (hasParams) {
+          if (hasAccepts) {
             const paramsRoute = Object.assign({}, request.params, request.query)
-            const validate = validatorParams(paramsRoute)
-            if (validate !== true) {
-              // validate === [{ type, message, field, actual }]
-              response.send(new Error(validate[0].message))
-              return
+
+            if (hasParams) {
+              const validate = validatorParams(paramsRoute)
+              if (validate !== true) {
+                // validate === [{ type, message, field, actual }]
+                response.send(new Error(validate[0].message))
+                return
+              }
             }
+
             res = object[name].apply(object, accepts.map(name => {
               if (name === Request) {
                 return request
@@ -95,6 +108,7 @@ export default class Server {
                 return paramsRoute[name]
               }
             }))
+            // res = object[name].apply(object, accepts.map(name => paramsMain[name] || paramsRoute[name]))
           } else {
             res = object[name]()
           }

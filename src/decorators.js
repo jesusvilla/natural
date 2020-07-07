@@ -73,12 +73,13 @@ export function Delete (url) {
  * @validation https://github.com/icebob/fastest-validator
  */
 export function Accepts () {
-  const schemaParams = {}
+  let schemaParams
   const accepts = []
 
   for (let i = 0; i < arguments.length; i++) {
     const param = arguments[i] // { name, type, required, ...fastest-validator }
-    if (param === Request || param === Response) {
+    if (typeof param === 'string') {
+      // Without validator
       accepts.push(param)
       continue
     }
@@ -86,6 +87,10 @@ export function Accepts () {
     const { name, required } = param
     delete param.name
     delete param.required
+
+    if (schemaParams === undefined) {
+      schemaParams = {}
+    }
 
     if (schemaParams[name] === undefined) {
       schemaParams[name] = Object.assign({

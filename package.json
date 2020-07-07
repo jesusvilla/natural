@@ -9,7 +9,7 @@
     "dev:debug": "nodemon --exec babel-node --inspect ./src/example/index.js",
     "build": "cross-env BABEL_ENV=production babel src -d lib --copy-files",
     "server": "cross-env NODE_ENV=production node ./lib/example/index.js",
-    "bench": "autocannon -c 100 -d 40 -p 10 localhost:3000/module1/developers/4"
+    "bench": "autocannon -c 100 -d 40 -p 10 localhost:3000/station/test/simple/4"
   },
   "author": "",
   "license": "ISC",
