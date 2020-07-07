@@ -1,11 +1,15 @@
-import { Controller, Accepts, Get, TypeJson } from '@natural/decorators'
+import { Controller, Accepts, Get, TypeJson, Request, Response } from '@natural/decorators'
+import Developer from '../services/Developer'
 
 @Controller('developers')
+@Accepts(Request)
 class Test {
   #devs
+  #headers
 
-  constructor () {
-    this.#devs = this.getService('Developer')
+  constructor (request) {
+    this.#devs = new Developer()
+    this.#headers = request.headers
   }
 
   @Get('')
@@ -14,14 +18,17 @@ class Test {
   }
 
   @Get(':id')
-  @Accepts({ name: 'id', type: 'number' })
+  @Accepts({ name: 'id', type: 'number' }, Request, Response)
   @TypeJson()
-  async findOne (id) {
+  async findOne (id, request, response) {
     const item = this.#devs.findOne(id)
     if (item === undefined) {
       return new Error('No available')
     }
-    return item
+    return {
+      item,
+      equal: this.#headers === request.headers
+    }
   }
 }
 

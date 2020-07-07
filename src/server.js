@@ -1,24 +1,9 @@
-import { META, META_ROUTE, META_NAME, META_SERVICE_NAME } from './decorators'
+import { META, META_ROUTE, META_NAME, Request, Response } from './decorators'
 import Validator from 'fastest-validator'
 
 import Router from './router'
 import fs from 'fs'
 import path from 'path'
-
-const ClassControllerMixin = (ClassController, services) => class extends ClassController {
-  constructor (request, response) {
-    super()
-    this.$request = request
-    this.$response = response
-  }
-
-  getService (name) {
-    if (Array.isArray(services)) {
-      return services.find(s => s === META_SERVICE_NAME)
-    }
-    return ''
-  }
-}
 
 export default class Server {
   constructor (config = {}) {
@@ -64,17 +49,16 @@ export default class Server {
 
   registerController (router, ClassController) {
     const nameController = ClassController[META][META_NAME].name
+    const acceptsController = ClassController[META][META_NAME].accepts || []
     const routerController = this.router.newRouter(nameController)
 
     if (ClassController[META].compiled !== true) {
-      const ClassControllerSuper = ClassControllerMixin(ClassController)
-
       Object.keys(ClassController[META][META_ROUTE]).forEach(name => {
         const configRoute = ClassController[META][META_ROUTE][name]
         configRoute.tags = [nameController, name]
         const accepts = configRoute.accepts || []
 
-        const hasParams = accepts.length !== 0
+        const hasParams = accepts.length !== 0 || accepts.find(a => a === Request || a === Response)
 
         let validatorParams
         if (hasParams) {
@@ -83,7 +67,15 @@ export default class Server {
         }
 
         configRoute.handler = (request, response) => {
-          const object = new ClassControllerSuper(request, response)
+          const acceptsCtrl = acceptsController.map(name => {
+            if (name === Request) {
+              return request
+            } else if (name === Response) {
+              return response
+            }
+          })
+          const object = new ClassController(...acceptsCtrl) // new ClassController(request, response)
+
           let res
 
           if (hasParams) {
@@ -94,7 +86,15 @@ export default class Server {
               response.send(new Error(validate[0].message))
               return
             }
-            res = object[name].apply(object, accepts.map(name => paramsRoute[name]))
+            res = object[name].apply(object, accepts.map(name => {
+              if (name === Request) {
+                return request
+              } else if (name === Response) {
+                return response
+              } else {
+                return paramsRoute[name]
+              }
+            }))
           } else {
             res = object[name]()
           }

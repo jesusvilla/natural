@@ -21,6 +21,14 @@ function getDefinition (prototype, nameMethod) {
   return ClassMeta[META_ROUTE][nameMethod]
 }
 
+function getDefinitionController (Class) {
+  const ClassMeta = getMeta(Class)
+  if (ClassMeta[META_NAME] === undefined) {
+    ClassMeta[META_NAME] = {}
+  }
+  return ClassMeta[META_NAME]
+}
+
 function Route (method, url) {
   return function (prototype, nameMethod) {
     const defMethod = getDefinition(prototype, nameMethod)
@@ -38,11 +46,9 @@ function Route (method, url) {
 export function Controller (name) {
   return function (Class) {
     const nameDefault = Class.name.toLowerCase()
-    getMeta(Class)[META_NAME] = {
-      name: nameDefault,
-      path: typeof name === 'string' ? name : `/${nameDefault}`
-    }
-    // getMeta(Class)[META_ROUTE][nameMethod]
+    const ControllerMeta = getDefinitionController(Class)
+    ControllerMeta.name = nameDefault
+    ControllerMeta.path = typeof name === 'string' ? name : `/${nameDefault}`
     // { method, url, accepts: [], params: Schema , type, status }
   }
 }
@@ -71,14 +77,20 @@ export function Accepts () {
   const accepts = []
 
   for (let i = 0; i < arguments.length; i++) {
-    const param = arguments[i] // { name, origin, required, ...fastest-validator }
+    const param = arguments[i] // { name, type, required, ...fastest-validator }
+    if (param === Request || param === Response) {
+      accepts.push(param)
+      continue
+    }
     // fastest-validator: { type }
     const { name, required } = param
     delete param.name
     delete param.required
 
     if (schemaParams[name] === undefined) {
-      schemaParams[name] = Object.assign(param, {
+      schemaParams[name] = Object.assign({
+        type: 'string'
+      }, param, {
         optional: required !== true || param.optional === true,
         convert: true
       })
@@ -87,9 +99,14 @@ export function Accepts () {
   }
 
   return function (prototype, nameMethod) {
-    const defMethod = getDefinition(prototype, nameMethod)
-    defMethod.accepts = accepts
-    defMethod.params = schemaParams
+    if (nameMethod === undefined) {
+      // constructor has nameMethod undefined and prototype is Class
+      getDefinitionController(prototype).accepts = accepts
+    } else {
+      const defMethod = getDefinition(prototype, nameMethod)
+      defMethod.accepts = accepts
+      defMethod.params = schemaParams
+    }
   }
 }
 
@@ -135,3 +152,7 @@ export function Module (name) {
     getMeta(Class)[META_NAME] = name || Class.name.toLowerCase()
   }
 }
+
+export const Request = META + '_Request'
+
+export const Response = META + '_Response'
