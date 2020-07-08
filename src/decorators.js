@@ -45,7 +45,7 @@ function Route (method, url) {
 
 export function Controller (name) {
   return function (Class) {
-    const nameDefault = Class.name.toLowerCase()
+    const nameDefault = Class.name
     const ControllerMeta = getDefinitionController(Class)
     ControllerMeta.name = nameDefault
     ControllerMeta.path = typeof name === 'string' ? name : `/${nameDefault}`

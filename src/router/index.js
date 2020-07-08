@@ -1,5 +1,4 @@
-import './Response'
-import http from 'http'
+import extendResponse from './extend-response'
 import parse from './parseparams'
 import queryparams from './queryparams'
 import Trouter from './Trouter'
@@ -19,7 +18,8 @@ class NaturalRouter extends Trouter {
       },
       errorHandler: (err, req, res) => {
         res.send(err)
-      }
+      },
+      type: 'uws' // Type Server
     }, config)
     this.modules = {}
     this.server = undefined
@@ -28,9 +28,9 @@ class NaturalRouter extends Trouter {
 
   listen (port = 3000) {
     this.port = port
-    if (this.server === undefined) {
-      this.server = http.createServer()
-    }
+    const { HttpResponse, createServer } = require(this.config.type === 'uws' ? './uws' : './node')
+    extendResponse(HttpResponse)
+    this.server = createServer()
     this.server.on('request', this.lookup.bind(this))
 
     return new Promise((resolve, reject) => {
@@ -52,8 +52,13 @@ class NaturalRouter extends Trouter {
     super.use.apply(this, arguments)
 
     if (arguments[1] instanceof NaturalRouter) {
-      const { pattern } = parse(route, true)
-      this.modules[arguments[1].id] = pattern
+      const id = arguments[1].id
+      if (this.modules[id] === undefined) {
+        const { pattern } = parse(route, true)
+        this.modules[id] = pattern
+      } else {
+        console.warn(`SubRouter ${id} is already defined`)
+      }
     }
 
     return this

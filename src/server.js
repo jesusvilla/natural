@@ -1,7 +1,8 @@
 import { META, META_ROUTE, META_NAME, Request, Response } from './decorators'
 import Validator from 'fastest-validator'
-
+import { forEach } from './utils/object'
 import Router from './router'
+
 import fs from 'fs'
 import path from 'path'
 
@@ -10,6 +11,7 @@ export default class Server {
     this.config = Object.assign({
       modules: {}, // { Module: ClassModule }
       etag: 'fnv1a' // md5
+      // type, // Default: 'uws'
       // defaultRoute,
       // errorHandler
     }, config)
@@ -18,9 +20,8 @@ export default class Server {
 
     this.port = null
     this.server = null
-    Object.keys(this.config.modules).forEach(module => {
-      const ClassModule = this.config.modules[module]
-      const controllers = ClassModule[META].controller.controllers
+    forEach(this.config.modules, (ClassModule, module) => {
+      const { controllers } = ClassModule[META].controller
       this.registerModule(module, controllers)
     })
   }
@@ -54,8 +55,7 @@ export default class Server {
     const routerController = this.router.newRouter(nameController)
 
     if (ClassController[META].compiled !== true) {
-      Object.keys(ClassController[META][META_ROUTE]).forEach(name => {
-        const configRoute = ClassController[META][META_ROUTE][name]
+      forEach(ClassController[META][META_ROUTE], (configRoute, name) => {
         configRoute.tags = [nameController, name]
         const accepts = configRoute.accepts || []
 
@@ -119,8 +119,7 @@ export default class Server {
 
       ClassController[META].compiled = true
     } else {
-      Object.keys(ClassController[META][META_ROUTE]).forEach(name => {
-        const configRoute = ClassController[META][META_ROUTE][name]
+      forEach(ClassController[META][META_ROUTE], configRoute => {
         routerController.route(configRoute)
       })
     }

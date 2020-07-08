@@ -1,18 +1,18 @@
 import { Controller, Accepts, Get, TypeJson, Request, Response } from '@natural/decorators'
-import Developer from '../services/Developer'
+import DeveloperService from '../services/Developer'
 
 @Controller('developers')
 @Accepts(Request)
-class Test {
+class Developer {
   #devs
   #headers
 
   constructor (request) {
-    this.#devs = new Developer()
+    this.#devs = new DeveloperService()
     this.#headers = request.headers
   }
 
-  @Get('')
+  @Get()
   async findAll () {
     return this.#devs.findAll()
   }
@@ -32,4 +32,4 @@ class Test {
   }
 }
 
-export default Test
+export default Developer

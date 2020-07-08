@@ -26,7 +26,8 @@
     "standard": "^14.3.4"
   },
   "dependencies": {
-    "fastest-validator": "^1.4.2"
+    "fastest-validator": "^1.4.2",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v18.3.0"
   },
   "standard": {
     "parser": "babel-eslint"
