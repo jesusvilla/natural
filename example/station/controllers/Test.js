@@ -2,7 +2,7 @@ import { Controller, Accepts, Get, TypeJson } from '@natural/decorators'
 
 // Registered route: /test
 @Controller('test')
-class Test {
+class TestGet {
   // Without path
   // Registered route: /test/
   @Get()
@@ -41,4 +41,4 @@ class Test {
   }
 }
 
-export default Test
+export default TestGet

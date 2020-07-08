@@ -88,7 +88,7 @@ export default class Server {
           let res
 
           if (hasAccepts) {
-            const paramsRoute = Object.assign({}, request.params, request.query)
+            const paramsRoute = Object.assign({}, request.params, request.query, request.body)
 
             if (hasParams) {
               const validate = validatorParams(paramsRoute)

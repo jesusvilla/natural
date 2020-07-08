@@ -31,7 +31,72 @@ class NaturalRouter extends Trouter {
     const { HttpResponse, createServer } = require(this.config.type === 'uws' ? './uws' : './node')
     extendResponse(HttpResponse)
     this.server = createServer()
-    this.server.on('request', this.lookup.bind(this))
+    this.server.on('request', (request, response) => {
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        // @doc: https://developer.mozilla.org/en/docs/Web/HTTP/Methods/POST
+        const contentType = request.headers['content-type']
+        const MAX_BODY = 1e6 // ~~~ 1MB
+
+        let body
+        if (contentType === 'application/x-www-form-urlencoded') {
+          const qs = require('querystring')
+          request.on('data', chunk => {
+            body = (body === undefined ? '' : body) + chunk.toString('utf8')
+
+            if (body.length > MAX_BODY) request.connection.destroy()
+          })
+
+          request.on('end', () => {
+            if (body !== undefined) {
+              try {
+                request.body = qs.parse(body)
+              } catch (error) {
+                console.error(error)
+                request.body = {}
+              }
+            } else {
+              request.body = {}
+            }
+            this.lookup(request, response)
+          })
+        } else if (contentType === 'multipart/form-data') {
+          // Soon
+          /* if (body === undefined) {
+            body = str
+          } else {
+            body += chunk.toString('utf8')
+          } */
+          request.on('end', () => {
+            request.body = {}
+            this.lookup(request, response)
+          })
+        } else {
+          // application/json
+          request.on('data', chunk => {
+            body = (body === undefined ? '' : body) + chunk.toString('utf8')
+
+            if (body.length > MAX_BODY) request.connection.destroy()
+          })
+
+          request.on('end', () => {
+            if (body !== undefined) {
+              try {
+                request.body = JSON.parse(body)
+              } catch (error) {
+                console.error(error)
+                request.body = {}
+              }
+            } else {
+              request.body = {}
+            }
+            this.lookup(request, response)
+          })
+        }
+      } else {
+        request.body = {}
+        this.lookup(request, response)
+      }
+    })
 
     return new Promise((resolve, reject) => {
       this.server.listen(port, error => {

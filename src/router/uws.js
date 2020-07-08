@@ -2,7 +2,9 @@ import uWS from 'uWebSockets.js'
 import { Writable } from 'stream'
 import { toString, toLowerCase } from '../utils/string'
 import { forEach } from '../utils/object'
+
 const REQUEST_EVENT = 'request'
+const NOOP = () => {}
 
 export const createServer = (config = {}) => {
   let handler = (req, res) => {
@@ -18,32 +20,10 @@ export const createServer = (config = {}) => {
       res.finished = true
     })
 
-    const reqWrapper = new HttpRequest(req)
+    const reqWrapper = new HttpRequest(req, res)
     const resWrapper = new HttpResponse(res, uServer)
 
-    const method = reqWrapper.method
-    if (method !== 'GET' && method !== 'HEAD') {
-      let buffer
-
-      res.onData((bytes, isLast) => {
-        const chunk = Buffer.from(bytes)
-        if (isLast) {
-          if (!buffer) {
-            buffer = chunk
-          }
-          reqWrapper.body = buffer
-          if (!res.finished) {
-            handler(reqWrapper, resWrapper)
-          }
-        } else {
-          if (buffer) {
-            buffer = Buffer.concat([buffer, chunk])
-          } else {
-            buffer = chunk
-          }
-        }
-      })
-    } else if (!res.finished) {
+    if (res.finished !== true) {
       handler(reqWrapper, resWrapper)
     }
   })
@@ -75,20 +55,53 @@ export const createServer = (config = {}) => {
 }
 
 export class HttpRequest {
-  constructor (uRequest) {
+  constructor (uRequest, uResponse) {
     const q = uRequest.getQuery()
     this.req = uRequest
     this.url = uRequest.getUrl() + (q ? '?' + q : '')
     this.method = uRequest.getMethod().toUpperCase()
     this.statusCode = null
     this.statusMessage = null
-    this.body = null
     this.headers = {}
 
     uRequest.forEach((header, value) => {
       this.headers[header] = value
     })
+
+    if (this.method !== 'GET' && this.method !== 'HEAD') {
+      this.__onData = NOOP
+      this.__onEnd = NOOP
+
+      uResponse.onData((bytes, isLast) => {
+        if (bytes.byteLength !== 0) {
+          this.__onData(Buffer.from(bytes))
+          // this.emit('data', Buffer.from(bytes))
+        }
+
+        if (isLast) {
+          this.__onEnd()
+          // this.emit('end')
+        }
+      })
+    }
   }
+
+  on (method, cb) {
+    if (method === 'data') {
+      this.__onData = cb
+    } else if (method === 'end') {
+      this.__onEnd = cb
+    }
+    /* if (method === 'data' || method === 'end') {
+      this.__listeners[method] = cb
+    } */
+  }
+
+  /* emit (method, payload) {
+    if (this.__listeners[method] !== undefined) {
+      this.__listeners[method](payload)
+    }
+  } */
 
   getRawHeaders () {
     const raw = []
