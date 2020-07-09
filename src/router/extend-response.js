@@ -68,7 +68,7 @@ export default (HttpResponse) => {
       message: payload.message,
       data: payload.data
     })
-    if (process.env === 'development') {
+    if (process.env.NODE_ENV !== 'production') {
       console.error(payload)
     }
   }

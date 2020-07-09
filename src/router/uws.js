@@ -1,10 +1,10 @@
 import uWS from 'uWebSockets.js'
 import { Writable } from 'stream'
+import { STATUS_CODES } from 'http'
 import { toString, toLowerCase } from '../utils/string'
 import { forEach } from '../utils/object'
 
 const REQUEST_EVENT = 'request'
-const NOOP = () => {}
 
 export const createServer = (config = {}) => {
   let handler = (req, res) => {
@@ -15,17 +15,10 @@ export const createServer = (config = {}) => {
   }
 
   const uServer = uWS.App(config).any('/*', (res, req) => {
-    res.finished = false
-    res.onAborted(() => {
-      res.finished = true
-    })
-
     const reqWrapper = new HttpRequest(req, res)
     const resWrapper = new HttpResponse(res, uServer)
 
-    if (res.finished !== true) {
-      handler(reqWrapper, resWrapper)
-    }
+    handler(reqWrapper, resWrapper)
   })
 
   uServer._date = new Date().toUTCString()
@@ -63,45 +56,38 @@ export class HttpRequest {
     this.statusCode = null
     this.statusMessage = null
     this.headers = {}
+    this.__listeners = {}
 
     uRequest.forEach((header, value) => {
       this.headers[header] = value
     })
 
-    if (this.method !== 'GET' && this.method !== 'HEAD') {
-      this.__onData = NOOP
-      this.__onEnd = NOOP
+    uResponse.onAborted(() => {
+      this.emit('aborted')
+    })
 
+    if (this.method !== 'GET' && this.method !== 'HEAD') {
       uResponse.onData((bytes, isLast) => {
         if (bytes.byteLength !== 0) {
-          this.__onData(Buffer.from(bytes))
-          // this.emit('data', Buffer.from(bytes))
+          this.emit('data', Buffer.from(bytes))
         }
 
         if (isLast) {
-          this.__onEnd()
-          // this.emit('end')
+          this.emit('end')
         }
       })
     }
   }
 
   on (method, cb) {
-    if (method === 'data') {
-      this.__onData = cb
-    } else if (method === 'end') {
-      this.__onEnd = cb
-    }
-    /* if (method === 'data' || method === 'end') {
-      this.__listeners[method] = cb
-    } */
+    this.__listeners[method] = cb
   }
 
-  /* emit (method, payload) {
+  emit (method, payload) {
     if (this.__listeners[method] !== undefined) {
       this.__listeners[method](payload)
     }
-  } */
+  }
 
   getRawHeaders () {
     const raw = []
@@ -113,6 +99,12 @@ export class HttpRequest {
 
   getRaw () {
     return this.req
+  }
+
+  destroy (e) {
+    // ToDo: put Error
+    this.aborted = true
+    return this
   }
 }
 
@@ -132,9 +124,10 @@ export class HttpResponse extends Writable {
 
     this.res = uResponse
     this.server = uServer
+    this.finished = false
 
     this.statusCode = 200
-    this.statusMessage = 'OK'
+    // this.statusMessage = undefined
 
     this.__headers = {}
     this.headersSent = false
@@ -190,7 +183,14 @@ export class HttpResponse extends Writable {
   }
 
   end (data = '') {
-    this.res.writeStatus(`${this.statusCode} ${this.statusMessage}`)
+    let statusMessage
+    if (this.statusMessage === undefined) {
+      statusMessage = STATUS_CODES[this.statusCode] || 'OK'
+    } else {
+      statusMessage = this.statusMessage
+    }
+
+    this.res.writeStatus(`${this.statusCode} ${statusMessage}`)
 
     if (!this.__isWritable) {
       writeAllHeaders.call(this)

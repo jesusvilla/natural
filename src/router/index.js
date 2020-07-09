@@ -7,6 +7,15 @@ const newId = () => {
   return (Date.now().toString(36) + Math.random().toString(36).substr(2, 5))// .toUpperCase()
 }
 
+const sendErrorBody = (request, response, body, MAX_BODY_SIZE) => {
+  if (body.length > MAX_BODY_SIZE) {
+    const BodyError = new Error('request entity too large')
+    BodyError.status = 413
+    // request.destroy()
+    response.error(BodyError)
+  }
+}
+
 class NaturalRouter extends Trouter {
   constructor (config = {}, id) {
     super()
@@ -19,7 +28,8 @@ class NaturalRouter extends Trouter {
       errorHandler: (err, req, res) => {
         res.send(err)
       },
-      type: 'uws' // Type Server
+      type: 'uws', // Type Server,
+      max_body_size: 1e7 // 10MB
     }, config)
     this.modules = {}
     this.server = undefined
@@ -35,7 +45,6 @@ class NaturalRouter extends Trouter {
       if (request.method !== 'GET' && request.method !== 'HEAD') {
         // @doc: https://developer.mozilla.org/en/docs/Web/HTTP/Methods/POST
         const contentType = request.headers['content-type']
-        const MAX_BODY = 1e6 // ~~~ 1MB
 
         let body
         if (contentType === 'application/x-www-form-urlencoded') {
@@ -43,7 +52,7 @@ class NaturalRouter extends Trouter {
           request.on('data', chunk => {
             body = (body === undefined ? '' : body) + chunk.toString('utf8')
 
-            if (body.length > MAX_BODY) request.connection.destroy()
+            sendErrorBody(request, response, body, this.config.max_body_size)
           })
 
           request.on('end', () => {
@@ -75,7 +84,7 @@ class NaturalRouter extends Trouter {
           request.on('data', chunk => {
             body = (body === undefined ? '' : body) + chunk.toString('utf8')
 
-            if (body.length > MAX_BODY) request.connection.destroy()
+            sendErrorBody(request, response, body, this.config.max_body_size)
           })
 
           request.on('end', () => {
@@ -131,6 +140,10 @@ class NaturalRouter extends Trouter {
 
   // https://github.com/jkyberneees/0http/blob/master/lib/router/sequential.js#L51
   lookup (req, res, step) {
+    if (res.writableEnded === true || res.finished === true) {
+      return
+    }
+
     if (!req.url) {
       req.url = '/'
     }
