@@ -3,12 +3,10 @@ const TYPE_JSON = 'application/json; charset=utf-8'
 const TYPE_PLAIN = 'text/plain; charset=utf-8'
 const TYPE_OCTET = 'application/octet-stream'
 
-const hasType = (response, type) => {
-  return response.getHeader(HEADER_TYPE) === type
-}
-
 const setType = (response, type) => {
-  if (!hasType(response, type)) response.type(type)
+  if (response.getHeader(HEADER_TYPE) === undefined) {
+    response.type(type)
+  }
 }
 
 // HELPERS

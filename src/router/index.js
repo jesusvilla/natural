@@ -68,17 +68,19 @@ class NaturalRouter extends Trouter {
             }
             this.lookup(request, response)
           })
-        } else if (contentType === 'multipart/form-data') {
+        } else if (contentType.includes('multipart/form-data')) {
           // Soon
           /* if (body === undefined) {
             body = str
           } else {
             body += chunk.toString('utf8')
           } */
-          request.on('end', () => {
+          request.body = {}
+          this.lookup(request, response)
+          /* request.on('end', () => {
             request.body = {}
             this.lookup(request, response)
-          })
+          }) */
         } else {
           // application/json
           request.on('data', chunk => {

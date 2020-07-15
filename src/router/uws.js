@@ -56,7 +56,7 @@ export class HttpRequest {
     this.statusCode = null
     this.statusMessage = null
     this.headers = {}
-    this.__listeners = {}
+    this._events = {}
 
     uRequest.forEach((header, value) => {
       this.headers[header] = value
@@ -80,12 +80,12 @@ export class HttpRequest {
   }
 
   on (method, cb) {
-    this.__listeners[method] = cb
+    this._events[method] = cb
   }
 
   emit (method, payload) {
-    if (this.__listeners[method] !== undefined) {
-      this.__listeners[method](payload)
+    if (this._events[method] !== undefined) {
+      this._events[method](payload)
     }
   }
 
@@ -111,7 +111,7 @@ export class HttpRequest {
 function writeAllHeaders () {
   this.res.writeHeader('Date', this.server._date)
 
-  forEach(this.__headers, ([name, value]) => {
+  forEach(this._headers, ([name, value]) => {
     this.res.writeHeader(name, value)
   })
 
@@ -129,37 +129,37 @@ export class HttpResponse extends Writable {
     this.statusCode = 200
     // this.statusMessage = undefined
 
-    this.__headers = {}
+    this._headers = {}
     this.headersSent = false
 
     this.on('pipe', _ => {
-      this.__isWritable = true
+      this._isWritable = true
       writeAllHeaders.call(this)
     })
   }
 
   setHeader (name, value) {
-    this.__headers[toLowerCase(name)] = [name, toString(value)]
+    this._headers[toLowerCase(name)] = [name, toString(value)]
   }
 
   getHeaderNames () {
-    return Object.keys(this.__headers)
+    return Object.keys(this._headers)
   }
 
   getHeaders () {
     const headers = {}
-    forEach(this.__headers, ([, value], name) => {
+    forEach(this._headers, ([, value], name) => {
       headers[name] = value
     })
     return headers
   }
 
   getHeader (name) {
-    return this.__headers[toLowerCase(name)]
+    return this._headers[toLowerCase(name)]
   }
 
   removeHeader (name) {
-    delete this.__headers[toLowerCase(name)]
+    delete this._headers[toLowerCase(name)]
   }
 
   write (data) {
@@ -192,7 +192,7 @@ export class HttpResponse extends Writable {
 
     this.res.writeStatus(`${this.statusCode} ${statusMessage}`)
 
-    if (!this.__isWritable) {
+    if (!this._isWritable) {
       writeAllHeaders.call(this)
     }
 
