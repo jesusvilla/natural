@@ -9,6 +9,7 @@
       ["module-resolver", {
           "alias": {
             "@natural/core": "./src/server",
+            "@natural/router": "./src/router",
             "@natural/decorators": "./src/decorators"
           }
       }]

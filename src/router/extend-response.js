@@ -9,6 +9,40 @@ const setType = (response, type) => {
   }
 }
 
+const ResponseTypes = {
+  json: (response, payload) => {
+    response.type(TYPE_JSON)
+    response.end(JSON.stringify(payload))
+    return response
+  },
+  text: (response, payload) => {
+    setType(response, TYPE_PLAIN)
+    response.end(payload)
+    return response
+  },
+  stream: (response, payload) => {
+    setType(response, TYPE_OCTET)
+    payload.pipe(response)
+  },
+  buffer: (response, payload) => {
+    setType(response, TYPE_OCTET)
+    response.end(payload)
+  },
+  error: (response, payload) => {
+    const errorCode = payload.status || payload.code || payload.statusCode
+    const statusCode = typeof errorCode === 'number' ? errorCode : 500
+    response.status(statusCode)
+    ResponseTypes.json(response, {
+      code: statusCode,
+      message: payload.message,
+      data: payload.data
+    })
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(payload)
+    }
+  }
+}
+
 // HELPERS
 
 export default (HttpResponse) => {
@@ -31,44 +65,6 @@ export default (HttpResponse) => {
   HttpResponse.prototype.type = function (type) {
     this.setHeader(HEADER_TYPE, type)
     return this
-  }
-
-  // TYPES
-
-  HttpResponse.prototype.json = function (payload) {
-    this.type(TYPE_JSON)
-    this.end(JSON.stringify(payload))
-    return this
-  }
-
-  HttpResponse.prototype.text = function (payload) {
-    setType(this, TYPE_PLAIN)
-    this.end(payload)
-    return this
-  }
-
-  HttpResponse.prototype.stream = function (payload) {
-    setType(this, TYPE_OCTET)
-    payload.pipe(this)
-  }
-
-  HttpResponse.prototype.buffer = function (payload) {
-    setType(this, TYPE_OCTET)
-    this.end(payload)
-  }
-
-  HttpResponse.prototype.error = function (payload) {
-    const errorCode = payload.status || payload.code || payload.statusCode
-    const statusCode = typeof errorCode === 'number' ? errorCode : 500
-    this.status(statusCode)
-    this.json({
-      code: statusCode,
-      message: payload.message,
-      data: payload.data
-    })
-    if (process.env.NODE_ENV !== 'production') {
-      console.error(payload)
-    }
   }
 
   /* const status = (res, code) => {
@@ -121,33 +117,35 @@ export default (HttpResponse) => {
   // https://expressjs.com/en/4x/api.html#res.send
   // https://www.fastify.io/docs/latest/Reply/#senddata
 
-  function send (payload, type) {
+  function send (response, payload, type) {
     if (payload instanceof Error) {
-      type = 'error'
+      ResponseTypes.error(response, payload)
+      return
     }
 
     if (type !== undefined) {
       // Automatic response
-      this[type](payload)
+      ResponseTypes[type](response, payload)
       return
     }
+
     const typeData = typeof payload
     if (payload === undefined) {
       // Explicit use response
     } else if (payload === null) {
-      this.json(payload)
+      response.end()
     } else if (typeData === 'string' || typeData === 'number') {
-      this.text(payload)
+      ResponseTypes.text(response, payload)
     } else if (typeData === 'object') {
       if (payload instanceof Buffer) {
-        this.buffer(payload)
+        ResponseTypes.buffer(response, payload)
       } else if (typeof payload.pipe === 'function') {
-        this.stream(payload)
+        ResponseTypes.stream(response, payload)
       } else {
-        this.json(payload)
+        ResponseTypes.json(response, payload)
       }
     } else {
-      this.send(payload)
+      response.end(payload + '')
     }
   }
 
@@ -262,12 +260,12 @@ export default (HttpResponse) => {
   HttpResponse.prototype.send = function (data, type) {
     if (data != null && typeof data.then === 'function') {
       data.then(res => {
-        send.call(this, res, type)
+        send(this, res, type)
       }).catch(error => {
-        send.call(this, error, 'error')
+        send(this, error, 'error')
       })
     } else {
-      send.call(this, data, type)
+      send(this, data, type)
     }
   }
 

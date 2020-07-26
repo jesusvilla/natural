@@ -1,4 +1,4 @@
-import { Controller, Accepts, Get, TypeJson } from '@natural/decorators'
+import { Controller, Accepts, Get, Post, TypeJson, Request, Response } from '@natural/decorators'
 
 // Registered route: /test
 @Controller('test')
@@ -38,6 +38,37 @@ class TestGet {
   @TypeJson()
   getIdWithValidator (id) {
     return { id, type: typeof id }
+  }
+
+  @Get('upload')
+  @Accepts(Response)
+  getUploadHtml (res) {
+    res.type('text/html')
+
+    return `
+    <html>
+      <head></head>
+      <body>
+        <form method="POST" enctype="multipart/form-data">
+          <input type="file" name="upload" multiple><br />
+          <input type="text" name="textfield[]"><br />
+          <input type="text" name="textfield[]"><br />
+          <input type="text" name="otextfield"><br />
+          <input type="file" name="filefield" multiple><br />
+          <input type="submit">
+        </form>\
+      </body>
+    </html>
+    `
+  }
+
+  @Post('upload')
+  @Accepts(Request, Response)
+  uploadFile (req, res) {
+    const { createReadStream } = require('fs')
+    const file = req.files.upload[0]
+    res.type(file.mimeType)
+    res.pipe(createReadStream(file.filepath))
   }
 }
 

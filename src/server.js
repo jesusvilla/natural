@@ -94,7 +94,7 @@ export default class Server {
               const validate = validatorParams(paramsRoute)
               if (validate !== true) {
                 // validate === [{ type, message, field, actual }]
-                response.send(new Error(validate[0].message))
+                response.send(new Error(validate[0].message), 'error')
                 return
               }
             }
@@ -112,7 +112,7 @@ export default class Server {
           } else {
             res = object[name]()
           }
-          response.send(res)
+          response.send(res, configRoute.type)
         }
         routerController.route(configRoute)
       })

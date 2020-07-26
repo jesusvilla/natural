@@ -5,8 +5,9 @@ async function bootstrap () {
   const app = new NaturalJS({
     modules: {
       station
-    },
-    type: 'uws'
+    }
+    // type: 'uws',
+    // tmpDir: __dirname
   })
   try {
     const port = await app.listen(3000)

@@ -1,10 +1,19 @@
 import uWS from 'uWebSockets.js'
-import { Writable } from 'stream'
+// import { Writable, Readable } from 'stream'
 import { STATUS_CODES } from 'http'
 import { toString, toLowerCase } from '../utils/string'
 import { forEach } from '../utils/object'
 
 const REQUEST_EVENT = 'request'
+
+const toBuffer = (ab) => {
+  const buf = Buffer.alloc(ab.byteLength)
+  const view = new Uint8Array(ab)
+  for (let i = 0; i < buf.length; ++i) {
+    buf[i] = view[i]
+  }
+  return buf
+}
 
 export const createServer = (config = {}) => {
   let handler = (req, res) => {
@@ -47,8 +56,9 @@ export const createServer = (config = {}) => {
   return facade
 }
 
-export class HttpRequest {
+export class HttpRequest /* extends Readable */ {
   constructor (uRequest, uResponse) {
+    // super()
     const q = uRequest.getQuery()
     this.req = uRequest
     this.url = uRequest.getUrl() + (q ? '?' + q : '')
@@ -69,15 +79,19 @@ export class HttpRequest {
     if (this.method !== 'GET' && this.method !== 'HEAD') {
       uResponse.onData((bytes, isLast) => {
         if (bytes.byteLength !== 0) {
-          this.emit('data', Buffer.from(bytes))
+          // this.push(toBuffer(bytes))
+          this.emit('data', toBuffer(bytes))
         }
 
         if (isLast) {
+          // this.push()
           this.emit('end')
         }
       })
     }
   }
+
+  // _read () {}
 
   on (method, cb) {
     this._events[method] = cb
@@ -118,9 +132,9 @@ function writeAllHeaders () {
   this.headersSent = true
 }
 
-export class HttpResponse extends Writable {
+export class HttpResponse /* extends Writable */ {
   constructor (uResponse, uServer) {
-    super()
+    this._events = {} // super()
 
     this.res = uResponse
     this.server = uServer
@@ -132,9 +146,29 @@ export class HttpResponse extends Writable {
     this._headers = {}
     this.headersSent = false
 
-    this.on('pipe', _ => {
+    this.on('pipe', (_) => {
       this._isWritable = true
       writeAllHeaders.call(this)
+    })
+  }
+
+  on (method, cb) {
+    this._events[method] = cb
+  }
+
+  emit (method, payload) {
+    if (this._events[method] !== undefined) {
+      this._events[method](payload)
+    }
+  }
+
+  pipe (readable) {
+    this.emit('pipe', readable)
+    readable.on('data', (chunk) => {
+      this.write(chunk)
+    })
+    readable.on('end', () => {
+      this.end()
     })
   }
 

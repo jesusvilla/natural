@@ -12,7 +12,7 @@
     "build:src": "cross-env BABEL_ENV=production babel src -d lib/src --copy-files",
     "build:dev": "npm run build:example && npm run build:src",
     "server": "cross-env NODE_ENV=production node ./lib/example/index.js",
-    "bench": "autocannon -c 100 -d 40 -p 10 localhost:3000/station/test/simple/4"
+    "bench": "autocannon -c 100 -d 10 -p 10 localhost:3000/station/test/simple/4"
   },
   "author": "",
   "license": "ISC",

@@ -2,24 +2,12 @@ import extendResponse from './extend-response'
 import parse from './parseparams'
 import queryparams from './queryparams'
 import Trouter from './Trouter'
-
-const newId = () => {
-  return (Date.now().toString(36) + Math.random().toString(36).substr(2, 5))// .toUpperCase()
-}
-
-const sendErrorBody = (request, response, body, MAX_BODY_SIZE) => {
-  if (body.length > MAX_BODY_SIZE) {
-    const BodyError = new Error('request entity too large')
-    BodyError.status = 413
-    // request.destroy()
-    response.error(BodyError)
-  }
-}
+import { newId } from '../utils/string'
 
 class NaturalRouter extends Trouter {
   constructor (config = {}, id) {
     super()
-    this.id = id || newId() // Identifier the router
+    this.id = id || newId(36) // Identifier the router
     this.config = Object.assign({
       defaultRoute: (req, res) => {
         res.statusCode = 404
@@ -28,8 +16,9 @@ class NaturalRouter extends Trouter {
       errorHandler: (err, req, res) => {
         res.send(err)
       },
-      type: 'uws', // Type Server,
-      max_body_size: 1e7 // 10MB
+      type: 'uws', // Type Server
+      maxBodySize: 1e7, // 10MB
+      tmpDir: require('os').tmpdir()
     }, config)
     this.modules = {}
     this.server = undefined
@@ -41,68 +30,10 @@ class NaturalRouter extends Trouter {
     const { HttpResponse, createServer } = require(this.config.type === 'uws' ? './uws' : './node')
     extendResponse(HttpResponse)
     this.server = createServer()
-    this.server.on('request', (request, response) => {
+    this.server.on('request', async (request, response) => {
       if (request.method !== 'GET' && request.method !== 'HEAD') {
-        // @doc: https://developer.mozilla.org/en/docs/Web/HTTP/Methods/POST
-        const contentType = request.headers['content-type']
-
-        let body
-        if (contentType === 'application/x-www-form-urlencoded') {
-          const qs = require('querystring')
-          request.on('data', chunk => {
-            body = (body === undefined ? '' : body) + chunk.toString('utf8')
-
-            sendErrorBody(request, response, body, this.config.max_body_size)
-          })
-
-          request.on('end', () => {
-            if (body !== undefined) {
-              try {
-                request.body = qs.parse(body)
-              } catch (error) {
-                console.error(error)
-                request.body = {}
-              }
-            } else {
-              request.body = {}
-            }
-            this.lookup(request, response)
-          })
-        } else if (contentType.includes('multipart/form-data')) {
-          // Soon
-          /* if (body === undefined) {
-            body = str
-          } else {
-            body += chunk.toString('utf8')
-          } */
-          request.body = {}
-          this.lookup(request, response)
-          /* request.on('end', () => {
-            request.body = {}
-            this.lookup(request, response)
-          }) */
-        } else {
-          // application/json
-          request.on('data', chunk => {
-            body = (body === undefined ? '' : body) + chunk.toString('utf8')
-
-            sendErrorBody(request, response, body, this.config.max_body_size)
-          })
-
-          request.on('end', () => {
-            if (body !== undefined) {
-              try {
-                request.body = JSON.parse(body)
-              } catch (error) {
-                console.error(error)
-                request.body = {}
-              }
-            } else {
-              request.body = {}
-            }
-            this.lookup(request, response)
-          })
-        }
+        const body = require('./body')
+        body(this, request, response)
       } else {
         request.body = {}
         this.lookup(request, response)
@@ -243,4 +174,4 @@ class NaturalRouter extends Trouter {
   }
 }
 
-export default NaturalRouter
+module.exports = NaturalRouter
