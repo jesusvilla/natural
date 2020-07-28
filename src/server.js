@@ -1,12 +1,26 @@
-import { META, META_ROUTE, META_NAME, Request, Response } from './decorators'
-import Validator from 'fastest-validator'
-import { forEach } from './utils/object'
-import Router from './router'
+const fs = require('fs')
+const path = require('path')
 
-import fs from 'fs'
-import path from 'path'
+const { META, META_ROUTE, META_NAME, Request, Response } = require('./decorators')
+const Validator = require('fastest-validator')
+const { forEach } = require('./utils/object')
+const { isPromise } = require('./utils/is')
+const Router = require('./router')
 
-export default class Server {
+const sendTryCatch = async (paramsRoute, errorHandler, cfgRouter, ctrl, nameMethod, req, res) => {
+  try {
+    const data = ctrl[nameMethod].apply(ctrl, paramsRoute)
+    if (isPromise(data)) {
+      res.send(await data, cfgRouter.type)
+    } else {
+      res.send(data, cfgRouter.type)
+    }
+  } catch (error) {
+    errorHandler(error, req, res)
+  }
+}
+
+module.exports = class Server {
   constructor (config = {}) {
     this.config = Object.assign({
       modules: {}, // { Module: ClassModule }
@@ -18,8 +32,6 @@ export default class Server {
 
     this.router = new Router(this.config)
 
-    this.port = null
-    this.server = null
     forEach(this.config.modules, (ClassModule, module) => {
       const { controllers } = ClassModule[META].controller
       this.registerModule(module, controllers)
@@ -34,11 +46,11 @@ export default class Server {
     const routerModule = this.router.newRouter(nameModule)
 
     if (Array.isArray(pathModule)) {
-      pathModule.forEach(ClassController => {
+      pathModule.forEach((ClassController) => {
         this.registerController(routerModule, ClassController)
       })
     } else if (typeof pathModule === 'string') {
-      fs.readdirSync(pathModule).forEach(file => {
+      fs.readdirSync(pathModule).forEach((file) => {
         this.registerController(routerModule, require(path.resolve(pathModule, file)).default)
       })
     } else {
@@ -68,26 +80,9 @@ export default class Server {
           validatorParams = v.compile(configRoute.params)
         }
 
-        configRoute.handler = (request, response) => {
-          let object
-          if (hasAcceptsController) {
-            const acceptsCtrl = acceptsController.map(name => {
-              if (name === Request) {
-                return request
-              } else if (name === Response) {
-                return response
-              } else {
-                console.warn('No available params:', name)
-              }
-            })
-            object = new ClassController(...acceptsCtrl)
-          } else {
-            object = new ClassController()
-          }
-
-          let res
-
-          if (hasAccepts) {
+        let acceptsHandler
+        if (hasAccepts) {
+          acceptsHandler = (ctrl, request, response) => {
             const paramsRoute = Object.assign({}, request.params, request.query, request.body)
 
             if (hasParams) {
@@ -99,7 +94,7 @@ export default class Server {
               }
             }
 
-            res = object[name].apply(object, accepts.map(name => {
+            sendTryCatch(accepts.map((name) => {
               if (name === Request) {
                 return request
               } else if (name === Response) {
@@ -107,19 +102,39 @@ export default class Server {
               } else {
                 return paramsRoute[name]
               }
-            }))
-            // res = object[name].apply(object, accepts.map(name => paramsMain[name] || paramsRoute[name]))
-          } else {
-            res = object[name]()
+            }), this.router.config.errorHandler, configRoute, ctrl, name, request, response)
           }
-          response.send(res, configRoute.type)
+        } else {
+          acceptsHandler = (ctrl, request, response) => {
+            sendTryCatch([], this.router.config.errorHandler, configRoute, ctrl, name, request, response)
+          }
+        }
+
+        if (hasAcceptsController) {
+          configRoute.handler = (request, response) => {
+            const acceptsCtrl = acceptsController.map((name) => {
+              if (name === Request) {
+                return request
+              } else if (name === Response) {
+                return response
+              } else {
+                console.warn('No available params:', name)
+              }
+            })
+            const object = new ClassController.apply(null, acceptsCtrl) // eslint-disable-line
+            acceptsHandler(object, request, response)
+          }
+        } else {
+          configRoute.handler = (request, response) => {
+            acceptsHandler(new ClassController(), request, response)
+          }
         }
         routerController.route(configRoute)
       })
 
       ClassController[META].compiled = true
     } else {
-      forEach(ClassController[META][META_ROUTE], configRoute => {
+      forEach(ClassController[META][META_ROUTE], (configRoute) => {
         routerController.route(configRoute)
       })
     }

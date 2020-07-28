@@ -1,15 +1,20 @@
-export const toString = (str) => {
+const toString = (str) => {
   return str + ''
 }
 
-export const toLowerCase = (str) => {
+const toLowerCase = (str) => {
   return toString(str).toLowerCase()
 }
 
-export const newId = () => {
+const newId = () => {
   return (Date.now().toString(36) + Math.random().toString(36).substr(2, 5))// .toUpperCase()
 }
 
-export const getFileName = () => {
+const getFileName = () => {
   return `tmp_${Date.now()}_${newId()}`
 }
+
+module.exports.toString = toString
+module.exports.toLowerCase = toLowerCase
+module.exports.newId = newId
+module.exports.getFileName = getFileName

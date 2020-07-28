@@ -1,8 +1,9 @@
-import extendResponse from './extend-response'
-import parse from './parseparams'
-import queryparams from './queryparams'
-import Trouter from './Trouter'
-import { newId } from '../utils/string'
+const extendResponse = require('./extend-response')
+const parse = require('./parseparams')
+const queryparams = require('./queryparams')
+const Trouter = require('./Trouter')
+const { newId } = require('../utils/string')
+const ResponseTypes = require('./ResponseTypes')
 
 class NaturalRouter extends Trouter {
   constructor (config = {}, id) {
@@ -13,8 +14,18 @@ class NaturalRouter extends Trouter {
         res.statusCode = 404
         res.end()
       },
-      errorHandler: (err, req, res) => {
-        res.send(err)
+      errorHandler: (error, req, res) => {
+        const errorCode = error.status || error.code || error.statusCode
+        const statusCode = typeof errorCode === 'number' ? errorCode : 500
+        res.status(statusCode)
+        ResponseTypes.json(res, {
+          code: statusCode,
+          message: error.message,
+          data: error.data
+        })
+        if (process.env.NODE_ENV !== 'production') {
+          console.error(error)
+        }
       },
       type: 'uws', // Type Server
       maxBodySize: 1e7, // 10MB

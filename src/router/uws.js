@@ -1,8 +1,8 @@
-import uWS from 'uWebSockets.js'
-// import { Writable, Readable } from 'stream'
-import { STATUS_CODES } from 'http'
-import { toString, toLowerCase } from '../utils/string'
-import { forEach } from '../utils/object'
+const uWS = require('uWebSockets.js')
+// const { Writable, Readable } = require('stream')
+const { STATUS_CODES } = require('http')
+const { toString, toLowerCase } = require('../utils/string')
+const { forEach } = require('../utils/object')
 
 const REQUEST_EVENT = 'request'
 
@@ -15,7 +15,7 @@ const toBuffer = (ab) => {
   return buf
 }
 
-export const createServer = (config = {}) => {
+module.exports.createServer = (config = {}) => {
   let handler = (req, res) => {
     res.statusCode = 404
     res.statusMessage = 'Not Found'
@@ -56,7 +56,7 @@ export const createServer = (config = {}) => {
   return facade
 }
 
-export class HttpRequest /* extends Readable */ {
+class HttpRequest /* extends Readable */ {
   constructor (uRequest, uResponse) {
     // super()
     const q = uRequest.getQuery()
@@ -132,7 +132,7 @@ function writeAllHeaders () {
   this.headersSent = true
 }
 
-export class HttpResponse /* extends Writable */ {
+class HttpResponse /* extends Writable */ {
   constructor (uResponse, uServer) {
     this._events = {} // super()
 
@@ -238,3 +238,6 @@ export class HttpResponse /* extends Writable */ {
     return this.res
   }
 }
+
+module.exports.HttpRequest = HttpRequest
+module.exports.HttpResponse = HttpResponse

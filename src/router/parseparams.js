@@ -1,4 +1,4 @@
-export default (str, loose) => {
+module.exports = (str, loose) => {
   if (str instanceof RegExp) return { keys: false, pattern: str }
   let c, o, tmp, ext
   const keys = []

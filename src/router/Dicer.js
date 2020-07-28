@@ -1,7 +1,7 @@
-import Dicer from './dicer'
-import { getFileName } from '../utils/string'
-import fs from 'fs'
-import path from 'path'
+const Dicer = require('./dicer')
+const { getFileName } = require('../utils/string')
+const fs = require('fs')
+const path = require('path')
 
 const REGEX_BOUNDARY = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i
 const REGEX_FORM = /name="(\w+)(\[\])?"(?:; filename="(.+)")?/

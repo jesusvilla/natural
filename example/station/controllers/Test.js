@@ -27,7 +27,7 @@ class TestGet {
   // Return type: json (application/json)
   @TypeJson()
   getSimpleId (id) {
-    return { id, type: typeof id }
+    return { id }
   }
 
   // With path, with params

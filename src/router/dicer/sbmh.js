@@ -3,7 +3,7 @@
   Based heavily on the Streaming Boyer-Moore-Horspool C++ implementation
   by Hongli Lai at: https://github.com/FooBarWidget/boyer-moore-horspool
 */
-import { EventEmitter } from 'events'
+const { EventEmitter } = require('events')
 
 const jsmemcmp = (buf1, pos1, buf2, pos2, num) => {
   for (let i = 0; i < num; ++i, ++pos1, ++pos2) {
@@ -233,4 +233,4 @@ class SBMH extends EventEmitter {
   }
 }
 
-export default SBMH
+module.exports = SBMH

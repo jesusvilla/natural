@@ -1,7 +1,10 @@
-export const META = '__natural__'
-export const META_ROUTE = 'routes'
-export const META_NAME = 'controller'
-export const META_SERVICE_NAME = 'service'
+const META = '__natural__'
+const META_ROUTE = 'routes'
+const META_NAME = 'controller'
+const META_SERVICE_NAME = 'service'
+
+const Request = META + '_Request'
+const Response = META + '_Response'
 
 function getMeta (Class) {
   if (Class[META] === undefined) {
@@ -43,7 +46,7 @@ function Route (method, url) {
   }
 }
 
-export function Controller (name) {
+function Controller (name) {
   return function (Class) {
     const nameDefault = Class.name
     const ControllerMeta = getDefinitionController(Class)
@@ -53,26 +56,26 @@ export function Controller (name) {
   }
 }
 
-export function Get (url) {
+function Get (url) {
   return Route('GET', url)
 }
 
-export function Post (url) {
+function Post (url) {
   return Route('POST', url)
 }
 
-export function Put (url) {
+function Put (url) {
   return Route('PUT', url)
 }
 
-export function Delete (url) {
+function Delete (url) {
   return Route('DELETE', url)
 }
 
 /**
  * @validation https://github.com/icebob/fastest-validator
  */
-export function Accepts () {
+function Accepts () {
   let schemaParams
   const accepts = []
 
@@ -123,28 +126,28 @@ function Type (type, status) {
   }
 }
 
-export function TypeJson (status) {
+function TypeJson (status) {
   return Type('json', status)
 }
 
-export function TypeText (status) {
+function TypeText (status) {
   return Type('text', status)
 }
 
-export function TypeStream (status) {
+function TypeStream (status) {
   return Type('stream', status)
 }
 
-export function TypeBuffer (status) {
+function TypeBuffer (status) {
   return Type('buffer', status)
 }
 
 // Soon...
-/* export function TypeFile (status) {
+/* function TypeFile (status) {
   return Type('file', status)
 } */
 
-export function Service () {
+function Service () {
   return function (Class) {
     getMeta(Class)[META_SERVICE_NAME] = {
       name: Class.name.toLowerCase()
@@ -152,12 +155,32 @@ export function Service () {
   }
 }
 
-export function Module (name) {
+function Module (name) {
   return function (Class) {
     getMeta(Class)[META_NAME] = name || Class.name.toLowerCase()
   }
 }
 
-export const Request = META + '_Request'
+module.exports.META = META
+module.exports.META_ROUTE = META_ROUTE
+module.exports.META_NAME = META_NAME
+module.exports.META_SERVICE_NAME = META_SERVICE_NAME
 
-export const Response = META + '_Response'
+module.exports.Request = Request
+module.exports.Response = Response
+
+module.exports.Controller = Controller
+module.exports.Get = Get
+module.exports.Post = Post
+module.exports.Put = Put
+module.exports.Delete = Delete
+
+module.exports.Accepts = Accepts
+
+module.exports.TypeJson = TypeJson
+module.exports.TypeText = TypeText
+module.exports.TypeStream = TypeStream
+module.exports.TypeBuffer = TypeBuffer
+
+module.exports.Service = Service
+module.exports.Module = Module

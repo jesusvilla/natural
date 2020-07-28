@@ -1,4 +1,4 @@
-export default (url) => {
+module.exports = (url) => {
   const qs = require('querystring')
   const [path, search] = url.split('?')
 

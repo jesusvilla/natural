@@ -1,4 +1,4 @@
-import parse from './parseparams'
+const parse = require('./parseparams')
 
 class Trouter {
   constructor () {
@@ -66,4 +66,4 @@ class Trouter {
   }
 }
 
-export default Trouter
+module.exports = Trouter

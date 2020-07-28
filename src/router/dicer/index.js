@@ -1,8 +1,8 @@
 // @origin: https://github.com/mscdex/dicer (Rewrite in ES6+)
-import { Writable } from 'stream'
-import HeaderParser from './HeaderParser'
-import PartStream from './PartStream'
-import StreamSearch from './sbmh'
+const { Writable } = require('stream')
+const HeaderParser = require('./HeaderParser')
+const PartStream = require('./PartStream')
+const StreamSearch = require('./sbmh')
 
 const DASH = 45
 const B_ONEDASH = Buffer.from('-')
@@ -220,4 +220,4 @@ class Dicer extends Writable {
   }
 }
 
-export default Dicer
+module.exports = Dicer

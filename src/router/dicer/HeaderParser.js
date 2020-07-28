@@ -1,5 +1,5 @@
-import { EventEmitter } from 'events'
-import StreamSearch from './sbmh'
+const { EventEmitter } = require('events')
+const StreamSearch = require('./sbmh')
 
 const B_DCRLF = Buffer.from('\r\n\r\n')
 const RE_CRLF = /\r\n/g
@@ -109,4 +109,4 @@ class HeaderParser extends EventEmitter {
   }
 }
 
-export default HeaderParser
+module.exports = HeaderParser
