@@ -4,17 +4,18 @@ const path = require('path')
 const { META, META_ROUTE, META_NAME, Request, Response } = require('./decorators')
 const Validator = require('fastest-validator')
 const { forEach } = require('./utils/object')
-const { isPromise } = require('./utils/is')
+// const { isPromise, isAsync } = require('./utils/is')
 const Router = require('./router')
 
 const sendTryCatch = async (paramsRoute, errorHandler, cfgRouter, ctrl, nameMethod, req, res) => {
   try {
-    const data = ctrl[nameMethod].apply(ctrl, paramsRoute)
+    /* const data = ctrl[nameMethod].apply(ctrl, paramsRoute)
     if (isPromise(data)) {
-      res.send(await data, cfgRouter.type)
+      res.send(await data)
     } else {
-      res.send(data, cfgRouter.type)
-    }
+      res.send(data)
+    } */
+    res.send(await ctrl[nameMethod].apply(ctrl, paramsRoute))
   } catch (error) {
     errorHandler(error, req, res)
   }
@@ -118,7 +119,7 @@ module.exports = class Server {
               } else if (name === Response) {
                 return response
               } else {
-                console.warn('No available params:', name)
+                return name
               }
             })
             const object = new ClassController.apply(null, acceptsCtrl) // eslint-disable-line

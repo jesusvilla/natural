@@ -4,12 +4,20 @@ function createRoutes (router) {
   router.route({
     url: '/station/test/simple/:id',
     method: 'GET',
-    // type: 'json',
+    type: 'json',
     handler: (request, response) => {
-      // const params = Object.assign({}, request.params, request.query, request.body)
-      response.send({ id: request.params.id }, 'json')
+      // request.params, request.query, request.body, request.files
+      response.send({ id: request.params.id })
     }
   })
+
+  // or
+  /*
+  router.on('GET', '/station/test/simple/:id', (request, response) => {
+    // request.params, request.query, request.body, request.files
+    response.send({ id: request.params.id }, 'json')
+  })
+  */
 }
 
 async function bootstrap () {

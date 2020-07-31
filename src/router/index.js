@@ -8,7 +8,7 @@ const ResponseTypes = require('./ResponseTypes')
 class NaturalRouter extends Trouter {
   constructor (config = {}, id) {
     super()
-    this.id = id || newId(36) // Identifier the router
+    this.id = id || newId() // Identifier the router
     this.config = Object.assign({
       defaultRoute: (req, res) => {
         res.statusCode = 404
@@ -38,13 +38,11 @@ class NaturalRouter extends Trouter {
 
   listen (port = 3000) {
     this.port = port
-    const { HttpResponse, createServer } = require(this.config.type === 'uws' ? './uws' : './node')
-    extendResponse(HttpResponse)
-    this.server = createServer()
-    this.server.on('request', async (request, response) => {
+    const http = require(this.config.type === 'uws' ? './uws' : './node')
+    extendResponse(http.ServerResponse)
+    this.server = http.createServer({}, async (request, response) => {
       if (request.method !== 'GET' && request.method !== 'HEAD') {
-        const body = require('./body')
-        body(this, request, response)
+        require('./body')(this, request, response)
       } else {
         request.body = {}
         this.lookup(request, response)
@@ -52,8 +50,8 @@ class NaturalRouter extends Trouter {
     })
 
     return new Promise((resolve, reject) => {
-      this.server.listen(port, error => {
-        if (error) {
+      this.server.listen(port, (error) => {
+        if (error !== undefined) {
           reject(error)
         } else {
           resolve(this.port)
@@ -72,8 +70,7 @@ class NaturalRouter extends Trouter {
     if (arguments[1] instanceof NaturalRouter) {
       const id = arguments[1].id
       if (this.modules[id] === undefined) {
-        const { pattern } = parse(route, true)
-        this.modules[id] = pattern
+        this.modules[id] = parse(route, true).pattern
       } else {
         console.warn(`SubRouter ${id} is already defined`)
       }
@@ -97,7 +94,7 @@ class NaturalRouter extends Trouter {
 
     Object.assign(req, queryparams(req.url))
 
-    const match = this.find(req.method, req.path)
+    const match = this._find(req.method, req.path)
 
     if (match.handlers.length !== 0) {
       const middlewares = match.handlers.slice(0)
@@ -105,11 +102,11 @@ class NaturalRouter extends Trouter {
       if (step !== undefined) {
         // router is being used as a nested router
         middlewares.push((req, res, next) => {
-          req.url = req.preRouterUrl
-          req.path = req.preRouterPath
+          req.url = req._preRouterUrl
+          req.path = req._preRouterPath
 
-          delete req.preRouterUrl
-          delete req.preRouterPath
+          delete req._preRouterUrl
+          delete req._preRouterPath
 
           return step()
         })
@@ -126,6 +123,7 @@ class NaturalRouter extends Trouter {
 
       const next = (index) => {
         const middleware = middlewares[index]
+        res._type = middleware._type
 
         if (middleware === undefined) {
           if (!res.finished) {
@@ -147,8 +145,8 @@ class NaturalRouter extends Trouter {
             // nested routes support
             const pattern = this.modules[middleware.id]
             if (pattern) {
-              req.preRouterUrl = req.url
-              req.preRouterPath = req.path
+              req._preRouterUrl = req.url
+              req._preRouterPath = req.path
 
               req.url = req.url.replace(pattern, '')
             }
@@ -168,21 +166,36 @@ class NaturalRouter extends Trouter {
     }
   }
 
-  on (/* method, pattern, ...handlers */) {
-    this.add.apply(this, arguments)
-  }
-
   /**
    * @doc https://www.fastify.io/docs/latest/Routes/#routes-option
    * @param {Object} config
+   *
+   * @param {string} config.method - Method UpperCase
+   * @param {string|RegExp} config.method - Method UpperCase
+   * @param {function} config.handler - Callback
    */
-  route ({ method, url, handler }) {
-    this.on(method, url, handler)
+  route ({ method, url, handler, type, preHandler }) {
+    // method, route, ...fns
+    const config = parse(url)
+    config.method = method
+    config.handlers = []
+    if (typeof preHandler === 'function') {
+      handler._type = type
+      config.handlers.push(preHandler)
+    }
+    if (typeof handler === 'function') {
+      handler._type = type
+      config.handlers.push(handler)
+    }
+    this.routes.push(config)
+    return this
   }
 
   newRouter (id) {
     return new NaturalRouter(this.config, id)
   }
 }
+
+NaturalRouter.ResponseTypes = ResponseTypes
 
 module.exports = NaturalRouter

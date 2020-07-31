@@ -3,8 +3,7 @@ const uWS = require('uWebSockets.js')
 const { STATUS_CODES } = require('http')
 const { toString, toLowerCase } = require('../utils/string')
 const { forEach } = require('../utils/object')
-
-const REQUEST_EVENT = 'request'
+const NOOP = () => {}
 
 const toBuffer = (ab) => {
   const buf = Buffer.alloc(ab.byteLength)
@@ -15,48 +14,43 @@ const toBuffer = (ab) => {
   return buf
 }
 
-module.exports.createServer = (config = {}) => {
-  let handler = (req, res) => {
-    res.statusCode = 404
-    res.statusMessage = 'Not Found'
+class Server {
+  constructor (config = {}, cb = NOOP) {
+    this.server = uWS.App(config).any('/*', (res, req) => {
+      const reqWrapper = new ServerRequest(req, res)
+      const resWrapper = new ServerResponse(res, this.server)
 
-    res.end()
+      cb(reqWrapper, resWrapper)
+    })
+    this._date = new Date().toUTCString()
+    this._timer = setInterval(() => {
+      this._date = new Date().toUTCString()
+    }, 1000)
   }
 
-  const uServer = uWS.App(config).any('/*', (res, req) => {
-    const reqWrapper = new HttpRequest(req, res)
-    const resWrapper = new HttpResponse(res, uServer)
-
-    handler(reqWrapper, resWrapper)
-  })
-
-  uServer._date = new Date().toUTCString()
-  const timer = setInterval(() => (uServer._date = new Date().toUTCString()), 1000)
-
-  const facade = {
-    on (event, cb) {
-      if (event !== REQUEST_EVENT) throw new Error(`Given "${event}" event is not supported!`)
-
-      handler = cb
-    },
-
-    close () {
-      clearInterval(timer)
-      uWS.us_listen_socket_close(uServer._socket)
-    }
-  }
-  facade.listen = facade.start = (port, cb) => {
-    uServer.listen(port, socket => {
-      uServer._socket = socket
+  listen (port, cb) {
+    this.server.listen(port, socket => {
+      this.server._socket = socket
 
       cb(socket ? undefined : new Error('uWebSocket Error unknown'))
     })
   }
 
-  return facade
+  start () {
+    this.listen.apply(this, arguments)
+  }
+
+  close () {
+    clearInterval(this._timer)
+    uWS.us_listen_socket_close(this.server._socket)
+  }
 }
 
-class HttpRequest /* extends Readable */ {
+module.exports.createServer = (config, cb) => {
+  return new Server(config, cb)
+}
+
+class ServerRequest /* extends Readable */ {
   constructor (uRequest, uResponse) {
     // super()
     const q = uRequest.getQuery()
@@ -132,7 +126,7 @@ function writeAllHeaders () {
   this.headersSent = true
 }
 
-class HttpResponse /* extends Writable */ {
+class ServerResponse /* extends Writable */ {
   constructor (uResponse, uServer) {
     this._events = {} // super()
 
@@ -239,5 +233,5 @@ class HttpResponse /* extends Writable */ {
   }
 }
 
-module.exports.HttpRequest = HttpRequest
-module.exports.HttpResponse = HttpResponse
+module.exports.ServerRequest = ServerRequest
+module.exports.ServerResponse = ServerResponse

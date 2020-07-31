@@ -1,12 +1,12 @@
 const ResponseTypes = require('./ResponseTypes')
 
-module.exports = (HttpResponse) => {
+module.exports = (ServerResponse) => {
   /**
    * status
    * @param {number} code - Status code
-   * @returns {HttpResponse}
+   * @returns {ServerResponse}
    */
-  HttpResponse.prototype.status = function (code) {
+  ServerResponse.prototype.status = function (code) {
     this.statusCode = code
     return this
   }
@@ -16,13 +16,13 @@ module.exports = (HttpResponse) => {
    * @param {string} location - Path to redirect
    * @param {number} [code=302] - Status code
    */
-  HttpResponse.prototype.redirect = function (location, code = 302) {
+  ServerResponse.prototype.redirect = function (location, code = 302) {
     this.status(code).writeHead('Location', location)
     this.end()
     return this
   }
 
-  HttpResponse.prototype.type = function (type) {
+  ServerResponse.prototype.type = function (type) {
     this.setHeader('content-type', type)
     return this
   }
@@ -30,10 +30,15 @@ module.exports = (HttpResponse) => {
   // https://github.com/jkyberneees/ana/blob/master/libs/response-extensions.js
   // https://expressjs.com/en/4x/api.html#res.send
   // https://www.fastify.io/docs/latest/Reply/#senddata
-  HttpResponse.prototype.send = function (payload, type) {
+  ServerResponse.prototype.send = function (payload, type) {
     if (type !== undefined) {
       // Automatic response
       ResponseTypes[type](this, payload)
+      return
+    }
+    if (this._type !== undefined) {
+      // Automatic response (from Route)
+      ResponseTypes[this._type](this, payload)
       return
     }
 
