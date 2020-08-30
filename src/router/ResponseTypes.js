@@ -3,7 +3,7 @@ const TYPE_PLAIN = 'text/plain; charset=utf-8'
 const TYPE_OCTET = 'application/octet-stream'
 
 const setType = (response, type) => {
-  if (response.getHeader('content-type') === undefined) {
+  if (response.getHeader('Content-Type') === undefined) {
     response.type(type)
   }
 }
@@ -134,5 +134,38 @@ module.exports = {
         this.error(error, undefined, 404)
       }
     })
+  }
+
+  const templates = Object.create(null)
+  const render = async ({ filepath, data, html, name }) => {
+    const { promisify } = require('util')
+    const ejs = require('ejs')
+
+    let id
+    if (html !== undefined) {
+      // by html (with name)
+      if (name === undefined) {
+        return Promise.reject(new TypeError('"name" is required'))
+      }
+      id = name
+      if (templates[id] === undefined) {
+        templates[id] = ejs.compile(html)
+      }
+    } else {
+      if (name !== undefined) {
+        // by @app/templates/[name]
+        filepath = require('path').join(__dirname, '../templates', name)
+      }
+      // by filepath
+      id = filepath
+      if (templates[id] === undefined) {
+        const fs = require('fs')
+        const readFile = promisify(fs.readFile)
+        const str = await readFile(filepath, 'utf8')
+        templates[id] = ejs.compile(str)
+      }
+    }
+    return templates[id](data)
+    // return promisify(templates[id])(data, null)
   }
   */

@@ -1,4 +1,5 @@
 const uWS = require('uWebSockets.js')
+// const EventEmitter = require('events')
 // const { Writable, Readable } = require('stream')
 const { STATUS_CODES } = require('http')
 const { toString, toLowerCase } = require('../utils/string')
@@ -15,16 +16,25 @@ const toBuffer = (ab) => {
 }
 
 class Server {
-  constructor (config = {}, cb = NOOP) {
-    this.server = uWS.App(config).any('/*', (res, req) => {
-      const reqWrapper = new ServerRequest(req, res)
-      const resWrapper = new ServerResponse(res, this.server)
+  constructor (configSSL, cb = NOOP) {
+    if (configSSL === undefined) {
+      this.server = uWS.App({})
+    } else {
+      this.server = uWS.SSLApp({
+        key_file_name: configSSL.key,
+        cert_file_name: configSSL.cert
+      })
+    }
+
+    this.server.any('/*', (res, req) => {
+      const reqWrapper = new ServerRequest(req, res, this.server)
+      const resWrapper = new ServerResponse(req, res, this.server)
 
       cb(reqWrapper, resWrapper)
     })
-    this._date = new Date().toUTCString()
+    this.server._date = new Date().toUTCString()
     this._timer = setInterval(() => {
-      this._date = new Date().toUTCString()
+      this.server._date = new Date().toUTCString()
     }, 1000)
   }
 
@@ -50,17 +60,70 @@ module.exports.createServer = (config, cb) => {
   return new Server(config, cb)
 }
 
-class ServerRequest /* extends Readable */ {
-  constructor (uRequest, uResponse) {
-    // super()
+// https://gist.github.com/mudge/5830382
+// New EE3: https://github.com/primus/eventemitter3/blob/master/index.js
+class EventEmitter {
+  constructor () {
+    this._events = {}
+  }
+
+  on (event, listener) {
+    if (this._events[event] === undefined) {
+      this._events[event] = [listener]
+    } else {
+      this._events[event].push(listener)
+    }
+
+    return () => {
+      this.off(event, listener)
+    }
+  }
+
+  addListener () {
+    return this.on.apply(this, arguments)
+  }
+
+  off (event, listener) {
+    if (this._events[event] !== undefined) {
+      const idx = this._events[event].indexOf(listener)
+      if (idx !== -1) {
+        this._events[event].splice(idx, 1)
+      }
+    }
+  }
+
+  removeListener () {
+    this.off.apply(this, arguments)
+  }
+
+  emit (event, ...args) {
+    if (this._events[event] !== undefined) {
+      this._events[event].forEach(listener => listener.apply(this, args))
+    }
+  }
+
+  once (event, listener) {
+    const self = this
+
+    return this.on(event, function once () {
+      self.off(event, once)
+      listener.apply(self, arguments)
+    })
+  }
+}
+
+class ServerRequest extends EventEmitter /* extends Readable */ {
+  constructor (uRequest, uResponse, uServer) {
+    super()
+
     const q = uRequest.getQuery()
     this.req = uRequest
     this.url = uRequest.getUrl() + (q ? '?' + q : '')
     this.method = uRequest.getMethod().toUpperCase()
     this.statusCode = null
     this.statusMessage = null
-    this.headers = {}
-    this._events = {}
+    this.headers = Object.create(null)
+    this.connection = uServer._socket
 
     uRequest.forEach((header, value) => {
       this.headers[header] = value
@@ -86,16 +149,6 @@ class ServerRequest /* extends Readable */ {
   }
 
   // _read () {}
-
-  on (method, cb) {
-    this._events[method] = cb
-  }
-
-  emit (method, payload) {
-    if (this._events[method] !== undefined) {
-      this._events[method](payload)
-    }
-  }
 
   getRawHeaders () {
     const raw = []
@@ -126,9 +179,9 @@ function writeAllHeaders () {
   this.headersSent = true
 }
 
-class ServerResponse /* extends Writable */ {
-  constructor (uResponse, uServer) {
-    this._events = {} // super()
+class ServerResponse extends EventEmitter /* extends Writable */ {
+  constructor (uRequest, uResponse, uServer) {
+    super()
 
     this.res = uResponse
     this.server = uServer
@@ -137,23 +190,13 @@ class ServerResponse /* extends Writable */ {
     this.statusCode = 200
     // this.statusMessage = undefined
 
-    this._headers = {}
+    this._headers = Object.create(null)
     this.headersSent = false
 
     this.on('pipe', (_) => {
       this._isWritable = true
       writeAllHeaders.call(this)
     })
-  }
-
-  on (method, cb) {
-    this._events[method] = cb
-  }
-
-  emit (method, payload) {
-    if (this._events[method] !== undefined) {
-      this._events[method](payload)
-    }
   }
 
   pipe (readable) {
@@ -175,7 +218,7 @@ class ServerResponse /* extends Writable */ {
   }
 
   getHeaders () {
-    const headers = {}
+    const headers = Object.create(null)
     forEach(this._headers, ([, value], name) => {
       headers[name] = value
     })
@@ -210,7 +253,19 @@ class ServerResponse /* extends Writable */ {
     })
   }
 
+  get writableFinished () {
+    return this.finished &&
+      this.outputSize === 0 &&
+      (!this.socket || this.socket.writableLength === 0)
+  }
+
+  // https://github.com/nodejs/node/blob/master/lib/_http_outgoing.js#L782
   end (data = '') {
+    if (this.finished) {
+      // ToDo
+      return this
+    }
+
     let statusMessage
     if (this.statusMessage === undefined) {
       statusMessage = STATUS_CODES[this.statusCode] || 'OK'

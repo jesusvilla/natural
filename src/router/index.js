@@ -4,6 +4,7 @@ const queryparams = require('./queryparams')
 const Trouter = require('./Trouter')
 const { newId } = require('../utils/string')
 const ResponseTypes = require('./ResponseTypes')
+const setBody = require('./body')
 
 class NaturalRouter extends Trouter {
   constructor (config = {}, id) {
@@ -30,19 +31,21 @@ class NaturalRouter extends Trouter {
       type: 'uws', // Type Server
       maxBodySize: 1e7, // 10MB
       tmpDir: require('os').tmpdir()
+      // ssl: { key, cert }
     }, config)
     this.modules = {}
-    this.server = undefined
-    this.port = undefined
+
+    // this.server = undefined
+    // this.port = undefined
   }
 
   listen (port = 3000) {
     this.port = port
     const http = require(this.config.type === 'uws' ? './uws' : './node')
     extendResponse(http.ServerResponse)
-    this.server = http.createServer({}, async (request, response) => {
+    this.server = http.createServer(this.config.ssl, async (request, response) => {
       if (request.method !== 'GET' && request.method !== 'HEAD') {
-        require('./body')(this, request, response)
+        setBody(this, request, response)
       } else {
         request.body = {}
         this.lookup(request, response)
@@ -92,7 +95,7 @@ class NaturalRouter extends Trouter {
       req.originalUrl = req.url
     }
 
-    Object.assign(req, queryparams(req.url))
+    queryparams(req)
 
     const match = this._find(req.method, req.path)
 

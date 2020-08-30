@@ -1,4 +1,4 @@
-import { Controller, Accepts, Get, Post, TypeJson, Request, Response } from '@natural/decorators'
+const { Controller, Accepts, Get, Post, TypeJson, Request, Response } = require('@natural/decorators')
 
 // Registered route: /test
 @Controller('test')
@@ -70,6 +70,14 @@ class TestGet {
     res.type(file.mimeType)
     res.pipe(createReadStream(file.filepath))
   }
+
+  @Get('jwt/:room/:role')
+  @Accepts('room', 'role')
+  generateToken (room, role) {
+    console.log('room', room)
+    console.log('role', role)
+    return { room, role }
+  }
 }
 
-export default TestGet
+module.exports = TestGet

@@ -23,7 +23,7 @@ module.exports = (ServerResponse) => {
   }
 
   ServerResponse.prototype.type = function (type) {
-    this.setHeader('content-type', type)
+    this.setHeader('Content-Type', type)
     return this
   }
 

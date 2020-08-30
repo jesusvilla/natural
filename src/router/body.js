@@ -1,4 +1,6 @@
 // @doc: https://developer.mozilla.org/en/docs/Web/HTTP/Methods/POST
+const qs = require('querystring')
+const getBody = require('./getBody')
 
 const sendErrorBody = (request, response, body, maxBodySize) => {
   if (body.length > maxBodySize) {
@@ -14,7 +16,6 @@ module.exports = async (router, request, response) => {
 
   let body
   if (contentType === 'application/x-www-form-urlencoded') {
-    const qs = require('querystring')
     request.on('data', chunk => {
       body = (body === undefined ? '' : body) + chunk.toString('utf8')
 
@@ -35,9 +36,8 @@ module.exports = async (router, request, response) => {
       router.lookup(request, response)
     })
   } else if (contentType.includes('multipart/form-data')) {
-    const Dicer = require('./Dicer')
     try {
-      const { body, files } = await Dicer.getBody(request, { tmpDir: router.config.tmpDir })
+      const { body, files } = await getBody(request, { tmpDir: router.config.tmpDir })
       request.body = body
       request.files = files
     } catch (error) {

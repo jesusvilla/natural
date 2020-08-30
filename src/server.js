@@ -52,7 +52,7 @@ module.exports = class Server {
       })
     } else if (typeof pathModule === 'string') {
       fs.readdirSync(pathModule).forEach((file) => {
-        this.registerController(routerModule, require(path.resolve(pathModule, file)).default)
+        this.registerController(routerModule, require(path.resolve(pathModule, file)))
       })
     } else {
       console.warn('NaturalJS', 'No valid module controllers')

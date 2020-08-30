@@ -6,7 +6,7 @@ const path = require('path')
 const REGEX_BOUNDARY = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i
 const REGEX_FORM = /name="(\w+)(\[\])?"(?:; filename="(.+)")?/
 
-Dicer.getBody = function (request, { tmpDir, maxFileSize, maxBodySize }) {
+module.exports = (request, { tmpDir, maxFileSize, maxBodySize }) => {
   const contentType = request.headers['content-type']
   const m = REGEX_BOUNDARY.exec(contentType)
   const d = new Dicer({ boundary: m[1] || m[2] })
@@ -92,5 +92,3 @@ Dicer.getBody = function (request, { tmpDir, maxFileSize, maxBodySize }) {
     })
   })
 }
-
-module.exports = Dicer

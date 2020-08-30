@@ -1,5 +1,5 @@
-import NaturalJS from '@natural/core'
-import station from './station'
+const NaturalJS = require('@natural/core')
+const station = require('./station')
 
 async function bootstrap () {
   const app = new NaturalJS({

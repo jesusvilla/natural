@@ -1,15 +1,17 @@
-module.exports = (url) => {
-  const qs = require('querystring')
-  const [path, search] = url.split('?')
+const qs = require('querystring')
 
-  const params = { path }
+module.exports = (request) => {
+  const [path, search] = request.url.split('?')
+
+  request.path = path
 
   if (search === undefined || search === '') {
-    params.search = '?'
-    params.query = {}
+    request.search = '?'
+    request.query = Object.create(null)
   } else {
-    params.search = '?' + search
-    params.query = qs.parse(search.replace(/\[\]=/g, '='))
+    request.search = '?' + search
+    request.query = qs.parse(search.replace(/\[\]=/g, '='))
   }
-  return params
+
+  return request
 }
