@@ -1,4 +1,4 @@
-const { Controller, Accepts, Post, Get, TypeJson } = require('@natural/decorators')
+const { Controller, Accepts, Post, Get, TypeJson } = require('@natural/common')
 
 // Registered route: /post
 @Controller('post')

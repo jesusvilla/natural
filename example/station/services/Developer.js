@@ -1,4 +1,4 @@
-const { Service } = require('@natural/decorators')
+const { Service } = require('@natural/common')
 
 const data = [
   { id: 1, name: 'Victor' },

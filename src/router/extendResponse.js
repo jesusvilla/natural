@@ -1,4 +1,4 @@
-const ResponseTypes = require('./ResponseTypes')
+const ResponseTypes = require('./ResponseTypes.js')
 
 module.exports = (ServerResponse) => {
   /**

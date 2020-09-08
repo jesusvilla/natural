@@ -3,9 +3,6 @@ const META_ROUTE = 'routes'
 const META_NAME = 'controller'
 const META_SERVICE_NAME = 'service'
 
-const Request = META + '_Request'
-const Response = META + '_Response'
-
 function getMeta (Class) {
   if (Class[META] === undefined) {
     Class[META] = {}
@@ -165,9 +162,6 @@ module.exports.META = META
 module.exports.META_ROUTE = META_ROUTE
 module.exports.META_NAME = META_NAME
 module.exports.META_SERVICE_NAME = META_SERVICE_NAME
-
-module.exports.Request = Request
-module.exports.Response = Response
 
 module.exports.Controller = Controller
 module.exports.Get = Get

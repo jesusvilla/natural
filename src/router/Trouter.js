@@ -1,5 +1,5 @@
-const parse = require('./parseparams')
-const { forEach } = require('../utils/object')
+const parse = require('./parseparams.js')
+const { forEach } = require('../utils/object.js')
 
 const getHandlers = (handlers, tmpHandlers) => {
   if (tmpHandlers.length > 1) {

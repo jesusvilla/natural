@@ -1,4 +1,4 @@
-const { Controller, Accepts, Get, TypeJson, Request, Response } = require('@natural/decorators')
+const { Controller, Accepts, Get, TypeJson, Request, Response } = require('@natural/common')
 const DeveloperService = require('../services/Developer')
 
 @Controller('developers')

@@ -10,7 +10,7 @@
           "alias": {
             "@natural/core": "./src/server",
             "@natural/router": "./src/router",
-            "@natural/decorators": "./src/decorators"
+            "@natural/common": "./src/common"
           }
       }]
   ]

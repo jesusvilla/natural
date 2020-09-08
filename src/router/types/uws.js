@@ -1,9 +1,9 @@
 const uWS = require('uWebSockets.js')
-const EventEmitter = require('events') // require('./EventEmitter.js')
+const EventEmitter = require('events') // require('../../utils/EventEmitter.js')
 // const { Writable, Readable } = require('stream')
 const { STATUS_CODES } = require('http')
-const { toString, toLowerCase } = require('../utils/string.js')
-const { forEach } = require('../utils/object.js')
+const { toString, toLowerCase } = require('../../utils/string.js')
+const { forEach } = require('../../utils/object.js')
 const NOOP = () => {}
 
 const toBuffer = (ab) => {

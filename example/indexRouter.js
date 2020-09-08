@@ -13,7 +13,7 @@ function createRoutes (router) {
       response.end('')
     })
     .route({
-      url: '/station/test/simple/:id',
+      url: '/test/simple/:id',
       method: 'GET',
       type: 'json',
       handler: (request, response) => {

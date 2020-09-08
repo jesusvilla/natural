@@ -1,11 +1,11 @@
 const fs = require('fs')
 const path = require('path')
 
-const { META, META_ROUTE, META_NAME, Request, Response } = require('./decorators')
+const { META, META_ROUTE, META_NAME, Request, Response } = require('./common.js')
 const Validator = require('fastest-validator')
-const { forEach } = require('./utils/object')
+const { forEach } = require('./utils/object.js')
 // const { isPromise, isAsync } = require('./utils/is')
-const Router = require('./router')
+const Router = require('./router/index.js')
 
 const sendTryCatch = async (paramsRoute, errorHandler, cfgRouter, ctrl, nameMethod, req, res) => {
   try {
@@ -34,8 +34,8 @@ module.exports = class Server {
     this.router = new Router(this.config)
 
     forEach(this.config.modules, (ClassModule, module) => {
-      const { controllers } = ClassModule[META].controller
-      this.registerModule(module, controllers)
+      const { controllers, path = module } = ClassModule[META].controller
+      this.registerModule(path, controllers)
     })
   }
 
@@ -90,7 +90,7 @@ module.exports = class Server {
               const validate = validatorParams(paramsRoute)
               if (validate !== true) {
                 // validate === [{ type, message, field, actual }]
-                response.send(new Error(validate[0].message), 'error')
+                this.router.config.errorHandler(new Error(validate[0].message), request, response)
                 return
               }
             }

@@ -1,10 +1,10 @@
-const extendResponse = require('./extend-response')
-const parse = require('./parseparams')
-const queryparams = require('./queryparams')
-const Trouter = require('./Trouter')
-const { newId } = require('../utils/string')
-const ResponseTypes = require('./ResponseTypes')
-const setBody = require('./body')
+const extendResponse = require('./extendResponse.js')
+const parse = require('./parseparams.js')
+const queryparams = require('./queryparams.js')
+const Trouter = require('./Trouter.js')
+const { newId } = require('../utils/string.js')
+const ResponseTypes = require('./ResponseTypes.js')
+const setBody = require('./body.js')
 
 class NaturalRouter extends Trouter {
   constructor (config = {}, id) {
@@ -41,7 +41,7 @@ class NaturalRouter extends Trouter {
 
   listen (port = 3000) {
     this.port = port
-    const http = require(this.config.type === 'uws' ? './uws' : './node')
+    const http = require(this.config.type === 'uws' ? './types/uws.js' : './types/node.js')
     extendResponse(http.ServerResponse)
     this.server = http.createServer(this.config.ssl, async (request, response) => {
       if (request.method !== 'GET' && request.method !== 'HEAD') {

@@ -1,7 +1,8 @@
-const Dicer = require('./dicer')
-const { getFileName } = require('../utils/string')
 const fs = require('fs')
 const path = require('path')
+
+const Dicer = require('./dicer/index.js')
+const { getFileName } = require('./string.js')
 
 const REGEX_BOUNDARY = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i
 const REGEX_FORM = /name="(\w+)(\[\])?"(?:; filename="(.+)")?/

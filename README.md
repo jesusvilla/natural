@@ -119,7 +119,7 @@ bootstrap()
 ### Controller
 
 ```js
-import { Controller, Accepts, Get, TypeJson } from '@natural/decorators'
+import { Controller, Accepts, Get, TypeJson } from '@natural/common'
 
 // Registered route: /test
 @Controller('test')

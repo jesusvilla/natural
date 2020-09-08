@@ -1,4 +1,4 @@
-const { Controller, Accepts, Get, Post, TypeJson, Request, Response } = require('@natural/decorators')
+const { Controller, Accepts, Get, Post, TypeJson, Request, Response } = require('@natural/common')
 
 // Registered route: /test
 @Controller('test')
@@ -31,6 +31,7 @@ class TestGet {
   }
 
   // With path, with params
+  // Registered route: /test/validator/:id
   @Get('validator/:id')
   // With arguments with validator: id (only type number)
   @Accepts({ name: 'id', type: 'number' })
@@ -40,6 +41,7 @@ class TestGet {
     return { id, type: typeof id }
   }
 
+  // Registered route: /test/upload
   @Get('upload')
   @Accepts(Response)
   getUploadHtml (res) {
