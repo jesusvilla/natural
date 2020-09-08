@@ -1,22 +1,28 @@
-const NaturalRouter = require('@natural/router')
+const NaturalRouter = require('../src/router') // '@natural/router' // ../src/router
 // const path = require('path')
 
 function createRoutes (router) {
-  router.get('/test/:id', (request, response) => {
-    response.end(request.params.id)
-  })
+  router
+    .get('/', (_, response) => {
+      response.end('')
+    })
+    .get('/user/:id', (request, response) => {
+      response.end(request.params.id)
+    })
+    .post('/user', (request, response) => {
+      response.end('')
+    })
+    .route({
+      url: '/station/test/simple/:id',
+      method: 'GET',
+      type: 'json',
+      handler: (request, response) => {
+        // request.params, request.query, request.body, request.files
+        response.send({ id: request.params.id }, 'json')
+      }
+    })
 
-  router.route({
-    url: '/station/test/simple/:id',
-    method: 'GET',
-    type: 'json',
-    handler: (request, response) => {
-      // request.params, request.query, request.body, request.files
-      response.send({ id: request.params.id })
-    }
-  })
-
-  router.route({
+  /* router.route({
     url: '/meet/auth',
     method: 'GET',
     type: 'json',
@@ -24,7 +30,7 @@ function createRoutes (router) {
       const params = Object.assign({}, request.params, request.query)
       response.send(params)
     }
-  })
+  }) */
 
   // or
   /*

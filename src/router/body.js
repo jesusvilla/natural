@@ -11,11 +11,17 @@ const sendErrorBody = (request, response, body, maxBodySize) => {
   }
 }
 
-module.exports = async (router, request, response) => {
+module.exports = (router, request, response) => {
   const contentType = request.headers['content-type']
 
-  let body
+  if (typeof contentType !== 'string') {
+    router.lookup(request, response)
+    return
+  }
+
   if (contentType === 'application/x-www-form-urlencoded') {
+    let body
+
     request.on('data', chunk => {
       body = (body === undefined ? '' : body) + chunk.toString('utf8')
 
@@ -36,16 +42,13 @@ module.exports = async (router, request, response) => {
       router.lookup(request, response)
     })
   } else if (contentType.includes('multipart/form-data')) {
-    try {
-      const { body, files } = await getBody(request, { tmpDir: router.config.tmpDir })
-      request.body = body
-      request.files = files
-    } catch (error) {
-      request.body = {}
-    }
-    router.lookup(request, response)
+    getBody(request, { tmpDir: router.config.tmpDir }, () => {
+      router.lookup(request, response)
+    })
   } else {
     // application/json
+    let body
+
     request.on('data', (chunk) => {
       body = (body === undefined ? '' : body) + chunk.toString('utf8')
 

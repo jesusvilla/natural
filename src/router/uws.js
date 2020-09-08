@@ -1,9 +1,9 @@
 const uWS = require('uWebSockets.js')
-// const EventEmitter = require('events')
+const EventEmitter = require('events') // require('./EventEmitter.js')
 // const { Writable, Readable } = require('stream')
 const { STATUS_CODES } = require('http')
-const { toString, toLowerCase } = require('../utils/string')
-const { forEach } = require('../utils/object')
+const { toString, toLowerCase } = require('../utils/string.js')
+const { forEach } = require('../utils/object.js')
 const NOOP = () => {}
 
 const toBuffer = (ab) => {
@@ -27,10 +27,10 @@ class Server {
     }
 
     this.server.any('/*', (res, req) => {
-      const reqWrapper = new ServerRequest(req, res, this.server)
-      const resWrapper = new ServerResponse(req, res, this.server)
-
-      cb(reqWrapper, resWrapper)
+      cb(
+        new ServerRequest(req, res, this.server),
+        new ServerResponse(req, res, this.server)
+      )
     })
     this.server._date = new Date().toUTCString()
     this._timer = setInterval(() => {
@@ -60,58 +60,6 @@ module.exports.createServer = (config, cb) => {
   return new Server(config, cb)
 }
 
-// https://gist.github.com/mudge/5830382
-// New EE3: https://github.com/primus/eventemitter3/blob/master/index.js
-class EventEmitter {
-  constructor () {
-    this._events = {}
-  }
-
-  on (event, listener) {
-    if (this._events[event] === undefined) {
-      this._events[event] = [listener]
-    } else {
-      this._events[event].push(listener)
-    }
-
-    return () => {
-      this.off(event, listener)
-    }
-  }
-
-  addListener () {
-    return this.on.apply(this, arguments)
-  }
-
-  off (event, listener) {
-    if (this._events[event] !== undefined) {
-      const idx = this._events[event].indexOf(listener)
-      if (idx !== -1) {
-        this._events[event].splice(idx, 1)
-      }
-    }
-  }
-
-  removeListener () {
-    this.off.apply(this, arguments)
-  }
-
-  emit (event, ...args) {
-    if (this._events[event] !== undefined) {
-      this._events[event].forEach(listener => listener.apply(this, args))
-    }
-  }
-
-  once (event, listener) {
-    const self = this
-
-    return this.on(event, function once () {
-      self.off(event, once)
-      listener.apply(self, arguments)
-    })
-  }
-}
-
 class ServerRequest extends EventEmitter /* extends Readable */ {
   constructor (uRequest, uResponse, uServer) {
     super()
@@ -122,8 +70,8 @@ class ServerRequest extends EventEmitter /* extends Readable */ {
     this.method = uRequest.getMethod().toUpperCase()
     this.statusCode = null
     this.statusMessage = null
-    this.headers = Object.create(null)
     this.connection = uServer._socket
+    this.headers = {}
 
     uRequest.forEach((header, value) => {
       this.headers[header] = value
@@ -169,14 +117,20 @@ class ServerRequest extends EventEmitter /* extends Readable */ {
   }
 }
 
-function writeAllHeaders () {
-  this.res.writeHeader('Date', this.server._date)
+const writeAllHeaders = (instance) => {
+  instance.res.writeHeader('Date', instance.server._date)
 
-  forEach(this._headers, ([name, value]) => {
-    this.res.writeHeader(name, value)
+  forEach(instance._headers, ([name, value]) => {
+    instance.res.writeHeader(name, value)
   })
 
-  this.headersSent = true
+  instance.headersSent = true
+}
+
+const writeHead = (instance, headers) => {
+  forEach(headers, (value, name) => {
+    instance.setHeader(name, value)
+  })
 }
 
 class ServerResponse extends EventEmitter /* extends Writable */ {
@@ -190,12 +144,12 @@ class ServerResponse extends EventEmitter /* extends Writable */ {
     this.statusCode = 200
     // this.statusMessage = undefined
 
-    this._headers = Object.create(null)
+    this._headers = {}
     this.headersSent = false
 
-    this.on('pipe', (_) => {
+    this.on('pipe', () => {
       this._isWritable = true
-      writeAllHeaders.call(this)
+      writeAllHeaders(this)
     })
   }
 
@@ -218,7 +172,7 @@ class ServerResponse extends EventEmitter /* extends Writable */ {
   }
 
   getHeaders () {
-    const headers = Object.create(null)
+    const headers = {}
     forEach(this._headers, ([, value], name) => {
       headers[name] = value
     })
@@ -239,18 +193,13 @@ class ServerResponse extends EventEmitter /* extends Writable */ {
 
   writeHead (statusCode) {
     this.statusCode = statusCode
-    let headers
+
     if (arguments.length === 2) {
-      headers = arguments[1]
+      writeHead(this, arguments[1])
     } else if (arguments.length === 3) {
       this.statusMessage = arguments[1]
-      headers = arguments[2]
-    } else {
-      headers = {}
+      writeHead(this, arguments[2])
     }
-    forEach(headers, (value, name) => {
-      this.setHeader(name, value)
-    })
   }
 
   get writableFinished () {
@@ -276,7 +225,7 @@ class ServerResponse extends EventEmitter /* extends Writable */ {
     this.res.writeStatus(`${this.statusCode} ${statusMessage}`)
 
     if (!this._isWritable) {
-      writeAllHeaders.call(this)
+      writeAllHeaders(this)
     }
 
     this.finished = true

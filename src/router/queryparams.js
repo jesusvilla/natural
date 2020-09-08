@@ -7,7 +7,7 @@ module.exports = (request) => {
 
   if (search === undefined || search === '') {
     request.search = '?'
-    request.query = Object.create(null)
+    request.query = {}
   } else {
     request.search = '?' + search
     request.query = qs.parse(search.replace(/\[\]=/g, '='))

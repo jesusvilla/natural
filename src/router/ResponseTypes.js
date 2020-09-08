@@ -3,7 +3,7 @@ const TYPE_PLAIN = 'text/plain; charset=utf-8'
 const TYPE_OCTET = 'application/octet-stream'
 
 const setType = (response, type) => {
-  if (response.getHeader('Content-Type') === undefined) {
+  if (response.getHeader('content-type') === undefined) {
     response.type(type)
   }
 }
@@ -12,12 +12,10 @@ module.exports = {
   json: (response, payload) => {
     response.type(TYPE_JSON)
     response.end(JSON.stringify(payload))
-    return response
   },
   text: (response, payload) => {
     setType(response, TYPE_PLAIN)
     response.end(payload)
-    return response
   },
   stream: (response, payload) => {
     setType(response, TYPE_OCTET)
@@ -136,7 +134,7 @@ module.exports = {
     })
   }
 
-  const templates = Object.create(null)
+  const templates = {}
   const render = async ({ filepath, data, html, name }) => {
     const { promisify } = require('util')
     const ejs = require('ejs')
