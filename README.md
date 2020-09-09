@@ -12,21 +12,8 @@ Node.js v10+
 
 ## Installation (/example)
 
-> Available soon
 ```
-$ npm i -S @natural
-```
-
-## Use
-
-Start NaturalRouter (/example)
-```
-$ npm run dev:router
-```
-
-Start NaturalJS (/example)
-```
-$ npm run dev
+$ npm i -S natural-framework
 ```
 
 ## Example
@@ -34,25 +21,31 @@ $ npm run dev
 
 NaturalRouter
 ```js
-const NaturalRouter = require('@natural/router')
+const NaturalRouter = require('natural-framework/lib/router')
 // const path = require('path')
 
 function createRoutes (router) {
-  router.get('/test/:id', (request, response) => {
-    response.end(request.params.id)
-  })
+  router
+    .get('/', (_, response) => {
+      response.end('')
+    })
+    .get('/user/:id', (request, response) => {
+      response.end(request.params.id)
+    })
+    .post('/user', (request, response) => {
+      response.end('')
+    })
+    .route({
+      url: '/test/simple/:id',
+      method: 'GET',
+      type: 'json',
+      handler: (request, response) => {
+        // request.params, request.query, request.body, request.files
+        response.send({ id: request.params.id }, 'json')
+      }
+    })
 
-  router.route({
-    url: '/station/test/simple/:id',
-    method: 'GET',
-    type: 'json',
-    handler: (request, response) => {
-      // request.params, request.query, request.body, request.files
-      response.send({ id: request.params.id })
-    }
-  })
-
-  router.route({
+  /* router.route({
     url: '/meet/auth',
     method: 'GET',
     type: 'json',
@@ -60,7 +53,7 @@ function createRoutes (router) {
       const params = Object.assign({}, request.params, request.query)
       response.send(params)
     }
-  })
+  }) */
 
   // or
   /*
@@ -93,7 +86,7 @@ bootstrap()
 
 NaturalJS
 ```js
-import NaturalJS from '@natural/core'
+import NaturalJS from 'natural-framework'
 import station from './station'
 
 async function bootstrap () {
@@ -165,6 +158,18 @@ class Test {
 export default Test
 ```
 
+
+## Use (Contribute)
+
+Start NaturalRouter (/example)
+```
+$ npm run dev:router
+```
+
+Start NaturalJS (/example)
+```
+$ npm run dev
+```
 
 ## Benchmarks
 > Comming soon...
