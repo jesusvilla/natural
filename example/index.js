@@ -1,4 +1,4 @@
-const NaturalJS = require('@natural/core')
+const NaturalJS = require('@natural/server')
 const station = require('./station')
 
 async function bootstrap () {

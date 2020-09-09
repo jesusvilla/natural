@@ -8,7 +8,7 @@
       ["@babel/plugin-proposal-class-properties", { "loose" : true }],
       ["module-resolver", {
           "alias": {
-            "@natural/core": "./src/server",
+            "@natural/server": "./src/server",
             "@natural/router": "./src/router",
             "@natural/common": "./src/common"
           }

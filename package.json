@@ -1,8 +1,17 @@
 {
-  "name": "natural",
-  "version": "0.1.0",
+  "name": "natural-framework",
+  "version": "0.1.1",
   "description": "",
-  "main": "libs/server.js",
+  "main": "lib/server.js",
+  "engines": {
+    "node": ">=10.x"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "lib/"
+  ],
+  "homepage": "https://github.com/jesusvilla/natural#readme",
   "scripts": {
     "lint": "standard",
     "create:ssl:single": "cd example/security && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout cert.key -out cert.pem -config req.cnf",
