@@ -1,10 +1,10 @@
 {
   "name": "natural-framework",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "",
   "main": "lib/server.js",
   "engines": {
-    "node": ">=10.x"
+    "node": ">=14.x"
   },
   "files": [
     "LICENSE",
@@ -27,6 +27,8 @@
     "build:dev": "npm run build:example && npm run build:src",
     "server": "cross-env NODE_ENV=production node ./lib/example/index.js",
     "bench": "autocannon -c 100 -d 10 -p 10 localhost:3000/test/simple/0",
+    "bench:clinic:doctor": "clinic doctor --on-port 'autocannon -c 100 -d 10 -p 10 localhost:3000/test/simple/0' -- node ./example/indexRouter.js",
+    "bench:clinic:bubble": "clinic bubbleprof --on-port 'autocannon -c 100 -d 10 -p 10 localhost:3000/test/simple/0' -- node ./example/indexRouter.js",
     "bench:vs:1": "autocannon -c 100 -d 10 -p 10 localhost:3000/",
     "bench:vs:2": "autocannon -c 100 -d 10 -p 10 localhost:3000/user/0",
     "bench:vs:3": "autocannon -c 100 -d 10 -p 10 -m 'POST' localhost:3000/user"
@@ -49,7 +51,7 @@
   },
   "dependencies": {
     "fastest-validator": "^1.4.2",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v18.3.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.6.0"
   },
   "standard": {
     "parser": "babel-eslint"

@@ -17,7 +17,7 @@ module.exports = (ServerResponse) => {
    * @param {number} [code=302] - Status code
    */
   ServerResponse.prototype.redirect = function (location, code = 302) {
-    this.status(code).writeHead('Location', location)
+    this.writeHead(code, { Location: location })
     this.end()
     return this
   }

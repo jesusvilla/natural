@@ -1,5 +1,6 @@
 const parse = require('./parseparams.js')
 const { forEach } = require('../utils/object.js')
+const { HTTP_GET, HTTP_HEAD } = require('../utils/constants.js')
 
 const getHandlers = (handlers, tmpHandlers) => {
   if (tmpHandlers.length > 1) {
@@ -42,7 +43,7 @@ class Trouter {
   }
 
   _find (method, url) {
-    const isHEAD = method === 'HEAD'
+    const isHEAD = method === HTTP_HEAD
     const arr = this.routes
     const params = {}
     let handlers = []
@@ -52,7 +53,7 @@ class Trouter {
       if (
         tmp.method.length === 0 ||
         tmp.method === method ||
-        (isHEAD && tmp.method === 'GET')
+        (isHEAD && tmp.method === HTTP_GET)
       ) {
         if (tmp.keys === false) {
           const matches = tmp.pattern.exec(url)

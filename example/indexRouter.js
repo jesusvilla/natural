@@ -1,6 +1,16 @@
 const NaturalRouter = require('../src/router') // '@natural/router' // ../src/router
 // const path = require('path')
 
+/**
+ * bench:vs:2:
+
+natural
+1. latency: 0.40ms, req/sec: 216908.8
+2. latency: 0.41ms, req/sec: 218086.4
+3. latency: 0.40ms, req/sec: 220441.6
+4. latency: 0.41ms, req/sec: 210432.0
+ */
+
 function createRoutes (router) {
   router
     .get('/', (_, response) => {

@@ -5,4 +5,9 @@ const forEach = (obj, cb) => {
   }
 }
 
+const extend = (obj, a) => {
+  return Object.assign(obj, a)
+}
+
 module.exports.forEach = forEach
+module.exports.extend = extend

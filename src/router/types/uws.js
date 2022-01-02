@@ -1,9 +1,11 @@
 const uWS = require('uWebSockets.js')
-const EventEmitter = require('events') // require('../../utils/EventEmitter.js')
+const EventEmitter = require('events')
+// const EventEmitter = require('../../utils/EventEmitter.js')
 // const { Writable, Readable } = require('stream')
 const { STATUS_CODES } = require('http')
 const { toString, toLowerCase } = require('../../utils/string.js')
 const { forEach } = require('../../utils/object.js')
+const { isUndefined, hasBody } = require('../../utils/is.js')
 const NOOP = () => {}
 
 const toBuffer = (ab) => {
@@ -17,7 +19,7 @@ const toBuffer = (ab) => {
 
 class Server {
   constructor (configSSL, cb = NOOP) {
-    if (configSSL === undefined) {
+    if (isUndefined(configSSL)) {
       this.server = uWS.App({})
     } else {
       this.server = uWS.SSLApp({
@@ -81,7 +83,7 @@ class ServerRequest extends EventEmitter /* extends Readable */ {
       this.emit('aborted')
     })
 
-    if (this.method !== 'GET' && this.method !== 'HEAD') {
+    if (hasBody(this.method)) {
       uResponse.onData((bytes, isLast) => {
         if (bytes.byteLength !== 0) {
           // this.push(toBuffer(bytes))
