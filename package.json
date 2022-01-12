@@ -1,6 +1,6 @@
 {
   "name": "natural-framework",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "",
   "main": "lib/server.js",
   "engines": {
@@ -33,8 +33,8 @@
     "bench:vs:2": "autocannon -c 100 -d 10 -p 10 localhost:3000/user/0",
     "bench:vs:3": "autocannon -c 100 -d 10 -p 10 -m 'POST' localhost:3000/user"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "jrvr1993@gmail.com",
+  "license": "GPL-3.0",
   "devDependencies": {
     "@babel/cli": "^7.10.4",
     "@babel/core": "^7.10.2",
