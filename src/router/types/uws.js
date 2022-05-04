@@ -1,8 +1,8 @@
 const uWS = require('uWebSockets.js')
-const EventEmitter = require('events')
-// const EventEmitter = require('../../utils/EventEmitter.js')
-// const { Writable, Readable } = require('stream')
 const { STATUS_CODES } = require('http')
+// const EventEmitter = require('events')
+const EventEmitter = require('../../utils/EventEmitter.js')
+// const { Writable, Readable } = require('stream')
 const { toString, toLowerCase } = require('../../utils/string.js')
 const { forEach } = require('../../utils/object.js')
 const { isUndefined, hasBody } = require('../../utils/is.js')
@@ -34,10 +34,10 @@ class Server {
         new ServerResponse(req, res, this.server)
       )
     })
-    this.server._date = new Date().toUTCString()
+    /* this.server._date = new Date().toUTCString()
     this._timer = setInterval(() => {
       this.server._date = new Date().toUTCString()
-    }, 1000)
+    }, 1000) */
   }
 
   listen (port, cb) {
@@ -53,7 +53,7 @@ class Server {
   }
 
   close () {
-    clearInterval(this._timer)
+    // clearInterval(this._timer)
     uWS.us_listen_socket_close(this.server._socket)
   }
 }
@@ -68,15 +68,15 @@ class ServerRequest extends EventEmitter /* extends Readable */ {
 
     const q = uRequest.getQuery()
     this.req = uRequest
-    this.url = uRequest.getUrl() + (q ? '?' + q : '')
+    this.url = uRequest.getUrl() + '?' + q
     this.method = uRequest.getMethod().toUpperCase()
     this.statusCode = null
     this.statusMessage = null
     this.connection = uServer._socket
-    this.headers = {}
-
-    uRequest.forEach((header, value) => {
-      this.headers[header] = value
+    this.headers = new Proxy(uRequest, {
+      get (obj, key) {
+        return obj.getHeader(key)
+      }
     })
 
     uResponse.onAborted(() => {
@@ -102,7 +102,7 @@ class ServerRequest extends EventEmitter /* extends Readable */ {
 
   getRawHeaders () {
     const raw = []
-    forEach(this.headers, (header, value) => {
+    this.req.forEach((header, value) => {
       raw.push(header, value)
     })
     return raw
@@ -120,7 +120,8 @@ class ServerRequest extends EventEmitter /* extends Readable */ {
 }
 
 const writeAllHeaders = (instance) => {
-  instance.res.writeHeader('Date', instance.server._date)
+  // instance.res.writeHeader('Date', instance.server._date)
+  // instance.res.writeHeader('Date', new Date().toUTCString())
 
   forEach(instance._headers, ([name, value]) => {
     instance.res.writeHeader(name, value)
@@ -217,12 +218,7 @@ class ServerResponse extends EventEmitter /* extends Writable */ {
       return this
     }
 
-    let statusMessage
-    if (this.statusMessage === undefined) {
-      statusMessage = STATUS_CODES[this.statusCode] || 'OK'
-    } else {
-      statusMessage = this.statusMessage
-    }
+    const statusMessage = this.statusMessage || STATUS_CODES[this.statusCode] || 'OK'
 
     this.res.writeStatus(`${this.statusCode} ${statusMessage}`)
 
