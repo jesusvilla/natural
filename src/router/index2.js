@@ -9,12 +9,16 @@ const METHOD_ALL = '*'
 
 const parse = (route, loose) => {
   if (!includes(route, ':') && !loose) {
-    return { path: route }
+    return {
+      origin: route,
+      path: route
+    }
   }
 
   const patternText = `^${route.replace(/\/:([^/]+)/g, '/(?<$1>[^/]+)')}${loose ? '(?=$|/)' : '/?$'}`
 
   return {
+    origin: route,
     pattern: new RegExp(patternText)
   }
 }
@@ -42,6 +46,17 @@ const getParams = (search) => {
       }
     )
   }
+}
+
+const getNodes = (url) => {
+  // return (url.match(/\/([^/]+)/g) || []).length
+  return url.split('/').filter(v => v).length
+}
+
+const sortRoutesNode = (arr) => {
+  arr.sort((a, b) => {
+    return (a.nodes - b.nodes) || (a.origin - b.origin)
+  })
 }
 
 class Cache {
@@ -91,17 +106,20 @@ class BaseRouter {
 
     const config = parse(route, true)
     config.method = METHOD_ALL
-    config.handlers = [].concat.apply([], handlers)
+    config.handlers = [].concat.apply([], handlers).map(h => h.bind(this))
+    config.nodes = getNodes(route)
     this.middlewares.push(config)
+    sortRoutesNode(this.middlewares)
     return this
   }
 
   on (method, route, handler) {
     const config = parse(route)
     config.method = method
-    config.handlers = [handler]
-
+    config.handlers = [handler.bind(this)]
+    config.nodes = getNodes(route)
     this.routes.push(config)
+    sortRoutesNode(this.middlewares)
     return this
   }
 
