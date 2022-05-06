@@ -1,13 +1,15 @@
 const { newId, includes } = require('../utils/string.js')
 const { isNumber, isUndefined, hasBody } = require('../utils/is.js')
-const { extend, forEach } = require('../utils/object.js')
+const { extend } = require('../utils/object.js')
 const ResponseTypes = require('./ResponseTypes.js')
 const extendResponse = require('./extendResponse.js')
 const setBody = require('./body.js')
 
+const METHOD_ALL = '*'
+
 const parse = (route, loose) => {
-  if (!includes(route, ':')) {
-    return { text: route }
+  if (!includes(route, ':') && !loose) {
+    return { path: route }
   }
 
   const patternText = `^${route.replace(/\/:([^/]+)/g, '/(?<$1>[^/]+)')}${loose ? '(?=$|/)' : '/?$'}`
@@ -60,11 +62,13 @@ class Cache {
   }
 }
 
-class Router {
+// @Doc: https://expressjs.com/es/4x/api.html#middleware-callback-function-examples
+class BaseRouter {
   constructor () {
     this.routes = []
+    this.middlewares = []
 
-    this.all = this.on.bind(this, '')
+    this.all = this.on.bind(this, METHOD_ALL)
     this.get = this.on.bind(this, 'GET')
     this.head = this.on.bind(this, 'HEAD')
     this.patch = this.on.bind(this, 'PATCH')
@@ -77,50 +81,76 @@ class Router {
   }
 
   use (route, ...fns) {
+    let handlers
+    if (arguments.length === 1) {
+      route = '/'
+      handlers = [arguments[0]]
+    } else {
+      handlers = fns
+    }
+
     const config = parse(route, true)
-    config.method = ''
-    config.handlers = [].concat.apply([], fns)
-    this.routes.push(config)
+    config.method = METHOD_ALL
+    config.handlers = [].concat.apply([], handlers)
+    this.middlewares.push(config)
     return this
   }
 
-  on (method, route, ...fns) {
+  on (method, route, handler) {
     const config = parse(route)
     config.method = method
-    config.handlers = [].concat.apply([], fns)
+    config.handlers = [handler]
 
     this.routes.push(config)
     return this
   }
 
   _find (method, url) {
-    // ToDo: multiple handlers
+    const handlers = []
+    const params = {}
+
+    for (const mid of this.middlewares) {
+      /* if (mid.method !== method && mid.method !== METHOD_ALL) {
+        continue
+      } */
+      const match = mid.pattern.exec(url)
+      if (match !== null) {
+        handlers.push(...mid.handlers)
+      }
+    }
+
     for (const route of this.routes) {
-      if (route.method !== method) continue
+      if (route.method !== method && route.method !== METHOD_ALL) {
+        continue
+      }
 
-      const params = {}
-      if (route.text !== undefined) {
-        if (route.text !== url) continue
+      if (route.path !== undefined) {
+        if (route.path !== url) {
+          continue
+        }
       } else {
-        const matches = route.pattern.exec(url)
-        if (matches === null) continue
+        const match = route.pattern.exec(url)
+        if (match === null) {
+          continue
+        }
 
-        if (matches.groups !== undefined) {
-          forEach(matches.groups, (group, key) => {
-            params[key] = group
-          })
+        if (match.groups !== undefined) {
+          extend(params, match.groups)
         }
       }
 
-      return {
-        handlers: route.handlers,
-        params
-      }
+      handlers.push(...route.handlers)
+      break
+    }
+
+    return {
+      handlers,
+      params
     }
   }
 }
 
-class NaturalRouter extends Router {
+class NaturalRouter extends BaseRouter {
   constructor (config = {}, id) {
     super()
     this.id = id || newId() // Identifier the router
@@ -242,20 +272,47 @@ class NaturalRouter extends Router {
   } */
 
   async lookup (request, response) {
-    const [path, search] = request.url.split('?')
-    const match = this._find(request.method, path)
-    if (match) {
-      const params = getParams(search) // { search, query }
-      request.path = path
-      request.search = params.search
-      request.query = params.query
-      request.params = match.params
-      await match.handlers[0](request, response)
-      return
+    const infoURL = request.url.split('?')
+    const match = this._find(request.method, infoURL[0])
+
+    if (!match || match.handlers.length === 0) {
+      return this.config.defaultRoute(request, response)
     }
 
-    response.statusCode = 404
-    response.end('No exist route')
+    const params = getParams(infoURL[1]) // => { search, query }
+    request.path = infoURL[0]
+    request.search = params.search
+    request.query = params.query
+    request.params = match.params
+
+    try {
+      const next = async (index) => {
+        const handler = match.handlers[index]
+
+        if (index === match.handlers.length - 1) {
+          // last handler
+          return handler(request, response, () => {})
+        }
+
+        return new Promise((resolve, reject) => {
+          handler(request, response, (error) => {
+            if (error) {
+              return reject(error)
+            }
+            next(index + 1).then(resolve, reject)
+          })
+        })
+      }
+
+      const value = await next(0)
+      if (value !== undefined) {
+        response.send(value)
+      } else if (!response.finished) {
+        this.config.defaultRoute(request, response)
+      }
+    } catch (error) {
+      this.config.errorHandler(error, request, response)
+    }
   }
 }
 
