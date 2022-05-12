@@ -1,2 +1,2 @@
-module.exports.HTTP_GET = 'GET'
-module.exports.HTTP_HEAD = 'HEAD'
+export const HTTP_GET = 'GET'
+export const HTTP_HEAD = 'HEAD'

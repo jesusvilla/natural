@@ -1,15 +1,15 @@
 // @origin: https://github.com/mscdex/dicer (Rewrite in ES6+)
-const { Writable } = require('stream')
-const HeaderParser = require('./HeaderParser')
-const PartStream = require('./PartStream')
-const StreamSearch = require('./sbmh')
+import { Writable } from 'stream'
+import HeaderParser from './HeaderParser'
+import PartStream from './PartStream'
+import StreamSearch from './sbmh'
 
 const DASH = 45
 const B_ONEDASH = Buffer.from('-')
 const B_CRLF = Buffer.from('\r\n')
 const NOOP = () => {}
 
-class Dicer extends Writable {
+export default class Dicer extends Writable {
   constructor (cfg) {
     super(cfg)
     if (!cfg.headerFirst && typeof cfg.boundary !== 'string') {
@@ -219,5 +219,3 @@ class Dicer extends Writable {
     }
   }
 }
-
-module.exports = Dicer

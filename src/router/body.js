@@ -1,6 +1,6 @@
 // @doc: https://developer.mozilla.org/en/docs/Web/HTTP/Methods/POST
-const qs = require('querystring')
-const getBody = require('../utils/getBody.js')
+import getBody from '../utils/getBody.js'
+import getParams from '../utils/queryparams'
 
 const sendErrorBody = (request, response, body, maxBodySize) => {
   if (body.length > maxBodySize) {
@@ -11,7 +11,7 @@ const sendErrorBody = (request, response, body, maxBodySize) => {
   }
 }
 
-module.exports = (router, request, response) => {
+export default (router, request, response) => {
   const contentType = request.headers['content-type']
 
   if (typeof contentType !== 'string' || contentType === '') {
@@ -31,7 +31,7 @@ module.exports = (router, request, response) => {
     request.on('end', () => {
       if (body !== undefined) {
         try {
-          request.body = qs.parse(body)
+          request.body = getParams(body).query
         } catch (error) {
           console.error(error)
           request.body = {}

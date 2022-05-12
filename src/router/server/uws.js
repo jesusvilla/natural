@@ -1,11 +1,13 @@
-const uWS = require('uWebSockets.js')
-const { STATUS_CODES } = require('http')
-// const EventEmitter = require('events')
-const EventEmitter = require('../../utils/EventEmitter.js')
-// const { Writable, Readable } = require('stream')
-const { toString, toLowerCase } = require('../../utils/string.js')
-const { forEach } = require('../../utils/object.js')
-const { isUndefined, hasBody } = require('../../utils/is.js')
+import uWS from 'uWebSockets.js'
+import { STATUS_CODES } from 'http'
+// import EventEmitter from 'events'
+import EventEmitter from '../../utils/EventEmitter.js'
+// import { Writable, Readable } from 'stream'
+import { toString, toLowerCase } from '../../utils/string.js'
+import { forEach } from '../../utils/object.js'
+import { isUndefined, hasBody } from '../../utils/is.js'
+import setBody from '../body.js'
+
 const NOOP = () => {}
 
 const toBuffer = (ab) => {
@@ -18,21 +20,26 @@ const toBuffer = (ab) => {
 }
 
 class Server {
-  constructor (configSSL, cb = NOOP) {
-    if (isUndefined(configSSL)) {
+  constructor (config, cb = NOOP) {
+    this.config = config
+    if (isUndefined(config.ssl)) {
       this.server = uWS.App({})
     } else {
       this.server = uWS.SSLApp({
-        key_file_name: configSSL.key,
-        cert_file_name: configSSL.cert
+        key_file_name: config.ssl.key,
+        cert_file_name: config.ssl.cert
       })
     }
 
-    this.server.any('/*', (res, req) => {
-      cb(
-        new ServerRequest(req, res, this.server),
-        new ServerResponse(req, res, this.server)
-      )
+    this.server.any('/*', (uRes, uReq) => {
+      const request = new config.ServerRequest(uReq, uRes, this.server)
+      const response = new config.ServerResponse(uReq, uRes, this.server)
+      if (hasBody(request.method)) {
+        setBody(config.router, request, response)
+      } else {
+        request.body = {}
+        cb(request, response)
+      }
     })
     /* this.server._date = new Date().toUTCString()
     this._timer = setInterval(() => {
@@ -48,27 +55,22 @@ class Server {
     })
   }
 
-  start () {
-    this.listen.apply(this, arguments)
-  }
-
   close () {
     // clearInterval(this._timer)
     uWS.us_listen_socket_close(this.server._socket)
   }
 }
 
-module.exports.createServer = (config, cb) => {
+export const createServer = (config, cb) => {
   return new Server(config, cb)
 }
 
-class ServerRequest extends EventEmitter /* extends Readable */ {
+export class ServerRequest extends EventEmitter /* extends Readable */ {
   constructor (uRequest, uResponse, uServer) {
     super()
 
-    const q = uRequest.getQuery()
-    this.req = uRequest
-    this.url = uRequest.getUrl() + '?' + q
+    this.raw = uRequest
+    this.url = uRequest.getUrl() + '?' + uRequest.getQuery()
     this.method = uRequest.getMethod().toUpperCase()
     this.statusCode = null
     this.statusMessage = null
@@ -102,14 +104,10 @@ class ServerRequest extends EventEmitter /* extends Readable */ {
 
   getRawHeaders () {
     const raw = []
-    this.req.forEach((header, value) => {
+    this.raw.forEach((header, value) => {
       raw.push(header, value)
     })
     return raw
-  }
-
-  getRaw () {
-    return this.req
   }
 
   destroy (e) {
@@ -136,7 +134,7 @@ const writeHead = (instance, headers) => {
   })
 }
 
-class ServerResponse extends EventEmitter /* extends Writable */ {
+export class ServerResponse extends EventEmitter /* extends Writable */ {
   constructor (uRequest, uResponse, uServer) {
     super()
 
@@ -234,6 +232,3 @@ class ServerResponse extends EventEmitter /* extends Writable */ {
     return this.res
   }
 }
-
-module.exports.ServerRequest = ServerRequest
-module.exports.ServerResponse = ServerResponse

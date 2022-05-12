@@ -1,5 +1,5 @@
-const { EventEmitter } = require('events')
-const StreamSearch = require('./sbmh')
+import { EventEmitter } from 'events'
+import StreamSearch from './sbmh'
 
 const B_DCRLF = Buffer.from('\r\n\r\n')
 const RE_CRLF = /\r\n/g
@@ -7,7 +7,7 @@ const RE_HDR = /^([^:]+):[ \t]?([\x00-\xFF]+)?$/ // eslint-disable-line
 const MAX_HEADER_PAIRS = 2000 // from node's http.js
 const MAX_HEADER_SIZE = 80 * 1024 // from node's http_parser
 
-class HeaderParser extends EventEmitter {
+export default class HeaderParser extends EventEmitter {
   constructor (cfg) {
     super()
 
@@ -108,5 +108,3 @@ class HeaderParser extends EventEmitter {
     }
   }
 }
-
-module.exports = HeaderParser

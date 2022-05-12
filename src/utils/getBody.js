@@ -1,13 +1,12 @@
-const fs = require('fs')
-const path = require('path')
-
-const Dicer = require('./dicer/index.js')
-const { getFileName } = require('./string.js')
+import { createWriteStream } from 'fs'
+import { join } from 'path'
+import Dicer from './dicer/index.js'
+import { generateFileName, getExtension } from './string.js'
 
 const REGEX_BOUNDARY = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i
 const REGEX_FORM = /name="(\w+)(\[\])?"(?:; filename="(.+)")?/
 
-module.exports = (request, { tmpDir, maxFileSize, maxBodySize }, cb) => {
+export default (request, { tmpDir, maxFileSize, maxBodySize }, cb) => {
   const contentType = request.headers['content-type']
   const m = REGEX_BOUNDARY.exec(contentType)
   const d = new Dicer({ boundary: m[1] || m[2] })
@@ -31,12 +30,12 @@ module.exports = (request, { tmpDir, maxFileSize, maxBodySize }, cb) => {
       if (filename !== undefined) {
         const fileObject = {
           mimeType: header['content-type'][0],
-          filepath: path.join(tmpDir, getFileName() + path.extname(filename)),
+          filepath: join(tmpDir, generateFileName() + getExtension(filename)),
           filename,
           size: 0
         }
 
-        const fileStream = fs.createWriteStream(fileObject.filepath)
+        const fileStream = createWriteStream(fileObject.filepath)
 
         p.on('data', (data) => {
           fileObject.size += data.length

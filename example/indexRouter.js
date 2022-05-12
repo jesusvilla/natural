@@ -1,4 +1,6 @@
-const NaturalRouter = require('../src/router') // '@natural/router' // ../src/router
+import * as HttpServer from '../src/router/server/worker.js'
+import NaturalRouter from '../src/router/index.js'
+// const NaturalRouter = require('../src/router/index2.js') // '@natural/router' // ../src/router
 // const path = require('path')
 
 /**
@@ -9,6 +11,25 @@ natural
 2. latency: 0.41ms, req/sec: 218086.4
 3. latency: 0.40ms, req/sec: 220441.6
 4. latency: 0.41ms, req/sec: 210432.0
+
+1 cambio
+
+1. latency: 0.42ms, req/sec: 219929.6
+2. latency: 0.42ms, req/sec: 223641.6
+
+2 cambio
+
+1. latency: 0.41ms, req/sec: 220787.2
+2. latency: 0.41ms, req/sec: 219865.6
+
+3 cambio + actualizacion uwebsocket
+
+1. latency: 0.42ms, req/sec: 221747.2
+2. latency: 0.40ms, req/sec: 218496.0
+
+4 actualizacion uwebsocket (node 14)  index2.js
+1. latency: 0.42ms, req/sec: 217305.6
+2. latency: 0.42ms, req/sec: 222156.8
  */
 
 function createRoutes (router) {
@@ -22,7 +43,19 @@ function createRoutes (router) {
     .post('/user', (request, response) => {
       response.end('')
     })
-    .route({
+    /* .get('/user/sub/route', async (request, response) => {
+      console.log('second...', request.params.middleware)
+      // response.end(request.params.middleware)
+      return request.params.middleware + ''
+    })
+    .use('/user', (request, response, next) => {
+      console.log('first...')
+      request.params.middleware = 1
+      // next()
+      next(new Error('Ooops'))
+    }) */
+
+  /* .route({
       url: '/test/simple/:id',
       method: 'GET',
       type: 'json',
@@ -30,7 +63,7 @@ function createRoutes (router) {
         // request.params, request.query, request.body, request.files
         response.send({ id: request.params.id }, 'json')
       }
-    })
+    }) */
 
   /* router.route({
     url: '/meet/auth',
@@ -53,6 +86,8 @@ function createRoutes (router) {
 
 async function bootstrap () {
   const router = new NaturalRouter({
+    // tmpDir: require('os').tmpdir
+    http: HttpServer
     // type: 'uws'
     /* ssl: {
       key: path.join(__dirname, './security/cert.key'),

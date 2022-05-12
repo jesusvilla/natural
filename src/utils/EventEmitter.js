@@ -1,7 +1,7 @@
 // https://gist.github.com/mudge/5830382
 // New EE3: https://github.com/primus/eventemitter3/blob/master/index.js
 
-module.exports = class EventEmitter {
+export default class EventEmitter {
   constructor () {
     this._events = {}
   }

@@ -8,7 +8,7 @@ const setType = (response, type) => {
   }
 }
 
-module.exports = {
+export default {
   json: (response, payload) => {
     response.type(TYPE_JSON)
     response.end(JSON.stringify(payload))

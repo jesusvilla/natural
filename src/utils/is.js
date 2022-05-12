@@ -1,31 +1,31 @@
-const { HTTP_GET, HTTP_HEAD } = require('./constants.js')
+import { HTTP_GET, HTTP_HEAD } from './constants.js'
 const AsyncFunction = (async () => {}).constructor
 const UNDEFINED = undefined
 const TYPE_NUMBER = 'number'
 // const AsyncPromise = (async () => {})().constructor
 
-module.exports.isPromise = (value) => {
+export const isPromise = (value) => {
   // return /* value instanceof Promise || */ value instanceof AsyncPromise
   return value != null && value.then instanceof Function
 }
 
-module.exports.isAsync = (value) => {
+export const isAsync = (value) => {
   return value instanceof AsyncFunction
 }
 
-module.exports.isFunction = (value) => {
+export const isFunction = (value) => {
   return value instanceof Function
 }
 
-module.exports.isUndefined = (value) => {
+export const isUndefined = (value) => {
   return value === UNDEFINED
 }
 
-module.exports.isNumber = (value) => {
+export const isNumber = (value) => {
   // eslint-disable-next-line valid-typeof
   return typeof value === TYPE_NUMBER
 }
 
-module.exports.hasBody = (method) => {
+export const hasBody = (method) => {
   return method !== HTTP_GET && method !== HTTP_HEAD
 }

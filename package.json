@@ -1,6 +1,6 @@
 {
   "name": "natural-framework",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "",
   "main": "lib/server.js",
   "engines": {
@@ -16,9 +16,10 @@
     "lint": "standard",
     "create:ssl:single": "cd example/security && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout cert.key -out cert.pem -config req.cnf",
     "create:ssl": "cd example/security && openssl req -x509 -newkey rsa:2048 -keyout cert.temp.key -out cert.pem -days 365 && openssl rsa -in cert.temp.key -out cert.key && rm -f cert.temp.key",
-    "dev": "nodemon --exec babel-node ./example/index.js",
+    "dev": "rollup -c -w",
     "dev:debug": "nodemon --exec babel-node --inspect ./src/example/index.js",
     "dev:router": "nodemon ./example/indexRouter.js",
+    "dev:router:worker": "wrangler dev ./example/router.bundle.js",
     "dev:router:clinic": "clinic doctor -- node ./example/indexRouter.js",
     "dev:router:debug": "nodemon --inspect ./src/example/indexRouter.js",
     "build": "cross-env BABEL_ENV=production babel src -d lib --copy-files",
@@ -42,16 +43,21 @@
     "@babel/plugin-proposal-class-properties": "^7.10.1",
     "@babel/plugin-proposal-decorators": "^7.10.1",
     "@babel/preset-env": "^7.10.2",
+    "@rollup/plugin-commonjs": "^22.0.0",
+    "@rollup/plugin-run": "^2.1.0",
     "autocannon": "^4.6.0",
     "babel-eslint": "^10.1.0",
     "babel-plugin-module-resolver": "^4.0.0",
     "cross-env": "^7.0.2",
     "nodemon": "^2.0.4",
-    "standard": "^14.3.4"
+    "rollup": "^2.72.0",
+    "rollup-plugin-babel": "^4.4.0",
+    "standard": "^14.3.4",
+    "wrangler": "^2.0.2"
   },
   "dependencies": {
     "fastest-validator": "^1.4.2",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.6.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.8.0"
   },
   "standard": {
     "parser": "babel-eslint"

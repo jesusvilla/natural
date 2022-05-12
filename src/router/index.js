@@ -1,26 +1,140 @@
-const ResponseTypes = require('./ResponseTypes.js')
-const extendResponse = require('./extendResponse.js')
+import { newId } from '../utils/string.js'
+import { isNumber, isUndefined } from '../utils/is.js'
+import { extend } from '../utils/object.js'
+import ResponseTypes from './ResponseTypes.js'
+import extendResponse from './extendResponse.js'
+import parse from '../utils/parseparams.js'
+import getParams from '../utils/queryparams.js'
 
-const parse = require('./parseparams.js')
-const setQueryParams = require('./queryparams.js')
-const Trouter = require('./Trouter.js')
-const { newId } = require('../utils/string.js')
-const { isNumber, isUndefined, isFunction, hasBody } = require('../utils/is.js')
-const { extend } = require('../utils/object.js')
-const setBody = require('./body.js')
+const METHOD_ALL = '*'
 
-const setParams = (req, params) => {
-  if (isUndefined(req.params)) {
-    req.params = {}
-  }
+const extendRequest = (Request) => Request
 
-  extend(req.params, params)
+const getNodes = (url) => {
+  // return (url.match(/\/([^/]+)/g) || []).length
+  return url.split('/').filter(v => v).length
 }
 
-class NaturalRouter extends Trouter {
+const sortRoutesNode = (arr) => {
+  arr.sort((a, b) => {
+    return (a.nodes - b.nodes) || (a.origin - b.origin)
+  })
+}
+
+class Cache {
+  constructor () {
+    this.elements = {}
+  }
+
+  has (key) {
+    return this.elements[key] !== undefined
+  }
+
+  set (key, value) {
+    this.elements[key] = value
+  }
+
+  get (key) {
+    return this.elements[key]
+  }
+}
+
+// @Doc: https://expressjs.com/es/4x/api.html#middleware-callback-function-examples
+class BaseRouter {
+  constructor () {
+    this.routes = []
+    this.middlewares = []
+
+    this.all = this.on.bind(this, METHOD_ALL)
+    this.get = this.on.bind(this, 'GET')
+    this.head = this.on.bind(this, 'HEAD')
+    this.patch = this.on.bind(this, 'PATCH')
+    this.options = this.on.bind(this, 'OPTIONS')
+    this.connect = this.on.bind(this, 'CONNECT')
+    this.delete = this.on.bind(this, 'DELETE')
+    this.trace = this.on.bind(this, 'TRACE')
+    this.post = this.on.bind(this, 'POST')
+    this.put = this.on.bind(this, 'PUT')
+  }
+
+  use (route, ...fns) {
+    let handlers
+    if (arguments.length === 1) {
+      route = '/'
+      handlers = [arguments[0]]
+    } else {
+      handlers = fns
+    }
+
+    const config = parse(route, true)
+    config.method = METHOD_ALL
+    config.handlers = [].concat.apply([], handlers).map(h => h.bind(this))
+    config.nodes = getNodes(route)
+    this.middlewares.push(config)
+    sortRoutesNode(this.middlewares)
+    return this
+  }
+
+  on (method, route, handler) {
+    const config = parse(route)
+    config.method = method
+    config.handlers = [handler.bind(this)]
+    config.nodes = getNodes(route)
+    this.routes.push(config)
+    sortRoutesNode(this.middlewares)
+    return this
+  }
+
+  _find (method, url) {
+    const handlers = []
+    const params = {}
+
+    for (const mid of this.middlewares) {
+      /* if (mid.method !== method && mid.method !== METHOD_ALL) {
+        continue
+      } */
+      const match = mid.pattern.exec(url)
+      if (match !== null) {
+        handlers.push(...mid.handlers)
+      }
+    }
+
+    for (const route of this.routes) {
+      if (route.method !== method && route.method !== METHOD_ALL) {
+        continue
+      }
+
+      if (route.path !== undefined) {
+        if (route.path !== url) {
+          continue
+        }
+      } else {
+        const match = route.pattern.exec(url)
+        if (match === null) {
+          continue
+        }
+
+        if (match.groups !== undefined) {
+          extend(params, match.groups)
+        }
+      }
+
+      handlers.push(...route.handlers)
+      break
+    }
+
+    return {
+      handlers,
+      params
+    }
+  }
+}
+
+class NaturalRouter extends BaseRouter {
   constructor (config = {}, id) {
     super()
     this.id = id || newId() // Identifier the router
+    this._cachedRoutes = new Cache()
     this.config = extend({
       defaultRoute: (req, res) => {
         res.statusCode = 404
@@ -39,13 +153,21 @@ class NaturalRouter extends Trouter {
           console.error(error)
         }
       },
-      type: 'uws', // Type Server
       maxBodySize: 1e7 // 10MB
       // tmpDir: require('os').tmpdir(),
       // ssl: { key, cert }
     }, config)
-    this.config.tmpDir = this.config.tmpDir || require('os').tmpdir()
-    this.config.http = this.config.http || require(`./types/${this.config.type}.js`)
+    // this.config.tmpDir = this.config.tmpDir || require('os').tmpdir()
+    // only test
+    // this.config.http = this.config.http || require(`./server/${this.config.type}.js`)
+    if (this.config.http === undefined) {
+      throw new Error('config.http is not defined: remember import from router/server/{type}.js')
+    }
+    /* this.config.http = {
+      createEvent,
+      ServerRequest,
+      ServerResponse
+    } */
     this.modules = {}
     // this.server = undefined
     // this.port = undefined
@@ -53,15 +175,14 @@ class NaturalRouter extends Trouter {
 
   listen (port = 3000) {
     this.port = port
-    const http = this.config.http
-    extendResponse(http.ServerResponse)
-    this.server = http.createServer(this.config.ssl, (request, response) => {
-      if (hasBody(request.method)) {
-        setBody(this, request, response)
-      } else {
-        request.body = {}
-        this.lookup(request, response)
-      }
+    const { ServerResponse, ServerRequest, createServer } = this.config.http
+    this.server = createServer({
+      router: this,
+      ServerResponse: extendResponse(ServerResponse),
+      ServerRequest: extendRequest(ServerRequest),
+      ssl: this.config.ssl
+    }, (request, response) => {
+      this.lookup(request, response)
     })
 
     return new Promise((resolve, reject) => {
@@ -75,131 +196,148 @@ class NaturalRouter extends Trouter {
     })
   }
 
-  use (route /*, ...fns */) {
-    if (isFunction(route)) {
-      super.use('/', route)
-      return this
+  /* _constructorWorker () {
+    // super()
+    this.config = {
+      http: {
+        createEvent,
+        ServerRequest,
+        ServerResponse
+      }
     }
+  }
 
-    super.use.apply(this, arguments)
+  async _listenWorker (event, context) {
+    const { http } = this.config
+    extendResponse(http.ServerResponse)
+    const request = new http.ServerRequest({ event, context })
+    const response = new http.ServerResponse({ event, context })
+    await this.lookup(request, response)
+    return createEventWorker(request, response)
+  } */
 
-    if (arguments[1] instanceof NaturalRouter) {
-      const id = arguments[1].id
-      if (isUndefined(this.modules[id])) {
-        this.modules[id] = parse(route, true).pattern
+  /* async lookupCache (request, response) {
+    const indexCache = request.method + '||' + request.url
+    if (!this._cachedRoutes.has(indexCache)) {
+      const [path, search] = request.url.split('?')
+      const match = this._find(request.method, path)
+      if (match) {
+        const params = getParams(search) // { search, query }
+        this._cachedRoutes.set(indexCache, {
+          path,
+          search: params.search,
+          query: params.query,
+          params: match.params,
+          handlers: match.handlers,
+          exist: true
+        })
       } else {
-        console.warn(`SubRouter ${id} is already defined`)
+        this._cachedRoutes.set(indexCache, {
+          exist: false
+        })
       }
     }
 
-    return this
-  }
-
-  // https://github.com/jkyberneees/0http/blob/master/lib/router/sequential.js#L51
-  lookup (req, res, step) {
-    if (res.writableEnded || res.finished) {
+    const routeCache = this._cachedRoutes.get(indexCache)
+    if (routeCache.exist) {
+      request.path = routeCache.path
+      request.search = routeCache.search
+      request.query = routeCache.query
+      request.params = routeCache.params
+      await routeCache.handlers[0](request, response)
       return
     }
 
-    if (!req.url) {
-      req.url = '/'
-    }
-    if (!req.originalUrl) {
-      req.originalUrl = req.url
-    }
+    response.statusCode = 404
+    response.end('No exist route')
+  } */
 
-    setQueryParams(req)
+  async lookup (request, response) {
+    const infoURL = request.url.split('?')
+    const match = this._find(request.method, infoURL[0])
 
-    const match = this._find(req.method, req.path)
-
-    if (match.handlers.length === 0) {
-      this.config.defaultRoute(req, res)
-      return
+    if (!match || match.handlers.length === 0) {
+      return this.config.defaultRoute(request, response)
     }
 
-    const middlewares = match.handlers.slice(0)
+    const params = getParams(infoURL[1]) // => { search, query }
+    request.path = infoURL[0]
+    request.search = params.search
+    request.query = params.query
+    request.params = match.params
 
-    if (!isUndefined(step)) {
-      // router is being used as a nested router
-      middlewares.push((req, res, next) => {
-        req.url = req._preRouterUrl
-        req.path = req._preRouterPath
+    try {
+      const next = async (index) => {
+        const handler = match.handlers[index]
 
-        delete req._preRouterUrl
-        delete req._preRouterPath
-
-        return step()
-      })
-    }
-
-    setParams(req, match.params)
-
-    const next = (index) => {
-      const middleware = middlewares[index]
-      res._type = middleware._type
-
-      if (isUndefined(middleware)) {
-        if (res.finished !== true) {
-          return this.config.defaultRoute(req, res)
+        if (index === match.handlers.length - 1) {
+          // last handler
+          return handler(request, response, () => {})
         }
-        return
-      }
 
-      try {
-        if (middleware instanceof NaturalRouter) {
-          // nested routes support
-          const pattern = this.modules[middleware.id]
-          if (pattern) {
-            req._preRouterUrl = req.url
-            req._preRouterPath = req.path
-
-            req.url = req.url.replace(pattern, '')
-          }
-
-          return middleware.lookup(req, res, step)
-        } else {
-          return middleware(req, res, (error) => {
-            return error ? this.config.errorHandler(error, req, res) : next(index + 1)
+        return new Promise((resolve, reject) => {
+          handler(request, response, (error) => {
+            if (error) {
+              return reject(error)
+            }
+            next(index + 1).then(resolve, reject)
           })
-        }
-      } catch (error) {
-        return this.config.errorHandler(error, req, res)
+        })
       }
-    }
 
-    next(0)
-  }
-
-  /**
-   * @doc https://www.fastify.io/docs/latest/Routes/#routes-option
-   * @param {Object} config
-   *
-   * @param {string} config.method - Method UpperCase
-   * @param {string|RegExp} config.method - Method UpperCase
-   * @param {function} config.handler - Callback
-   */
-  route ({ method, url, handler, type, preHandler }) {
-    // method, route, ...fns
-    const config = parse(url)
-    config.method = method
-    config.handlers = []
-    if (isFunction(preHandler)) {
-      handler._type = type
-      config.handlers.push(preHandler)
+      const value = await next(0)
+      if (value !== undefined) {
+        response.send(value)
+      } else if (!response.finished) {
+        this.config.defaultRoute(request, response)
+      }
+    } catch (error) {
+      this.config.errorHandler(error, request, response)
     }
-    if (isFunction(handler)) {
-      handler._type = type
-      config.handlers.push(handler)
-    }
-    this.routes.push(config)
-    return this
-  }
-
-  newRouter (id) {
-    return new NaturalRouter(this.config, id)
   }
 }
 
+/*  WORKER CLOUDFLARE
+const STATUS_CODES = {
+  404: 'Not Found',
+  200: 'OK',
+  500: 'Internal Server Error'
+}
+
+class ServerRequest {
+  constructor ({ event, context }) {
+    this.method = event.request.method
+    const url = new URL(event.request.url)
+    this.path = url.pathname
+    // this.query = Object.fromEntries(url.searchParams)
+    const { search, query } = getParams(url.searchParams.toString())
+    this.search = search
+    this.query = query
+  }
+}
+
+class ServerResponse {
+  constructor ({ event, context }) {
+    this.statusCode = 200
+    // this.statusMessage = undefined
+  }
+
+  end (body) {
+    this.body = body
+
+    if (this.statusMessage === undefined) {
+      this.statusMessage = STATUS_CODES[this.statusCode] || 'OK'
+    }
+  }
+}
+
+function createEventWorker (request, response) {
+  return new Response(response.body, {
+    status: response.statusCode,
+    statusText: response.statusMessage
+  })
+} */
+
 NaturalRouter.ResponseTypes = ResponseTypes
 
-module.exports = NaturalRouter
+export default NaturalRouter

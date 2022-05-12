@@ -1,25 +1,23 @@
-const toString = (str) => {
+export const toString = (str) => {
   return str + ''
 }
 
-const toLowerCase = (str) => {
+export const toLowerCase = (str) => {
   return toString(str).toLowerCase()
 }
 
-const newId = () => {
+export const newId = () => {
   return (Date.now().toString(36) + Math.random().toString(36).substr(2, 5))// .toUpperCase()
 }
 
-const getFileName = () => {
+export const generateFileName = () => {
   return `tmp_${Date.now()}_${newId()}`
 }
 
-const includes = (str, substr) => {
-  return str.indexOf(substr) !== -1
+export const getExtension = (filename) => {
+  return filename.substring(filename.lastIndexOf('.'))
 }
 
-module.exports.toString = toString
-module.exports.toLowerCase = toLowerCase
-module.exports.newId = newId
-module.exports.getFileName = getFileName
-module.exports.includes = includes
+export const includes = (str, substr) => {
+  return str.indexOf(substr) !== -1
+}

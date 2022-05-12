@@ -1,7 +1,7 @@
-const META = '__natural__'
-const META_ROUTE = 'routes'
-const META_NAME = 'controller'
-const META_SERVICE_NAME = 'service'
+export const META = '__natural__'
+export const META_ROUTE = 'routes'
+export const META_NAME = 'controller'
+export const META_SERVICE_NAME = 'service'
 
 function getMeta (Class) {
   if (Class[META] === undefined) {
@@ -43,7 +43,7 @@ function Route (method, url) {
   }
 }
 
-function Controller (name) {
+export function Controller (name) {
   return function (Class) {
     const nameDefault = Class.name
     const ControllerMeta = getDefinitionController(Class)
@@ -53,26 +53,26 @@ function Controller (name) {
   }
 }
 
-function Get (url) {
+export function Get (url) {
   return Route('GET', url)
 }
 
-function Post (url) {
+export function Post (url) {
   return Route('POST', url)
 }
 
-function Put (url) {
+export function Put (url) {
   return Route('PUT', url)
 }
 
-function Delete (url) {
+export function Delete (url) {
   return Route('DELETE', url)
 }
 
 /**
  * @validation https://github.com/icebob/fastest-validator
  */
-function Accepts () {
+export function Accepts () {
   let schemaParams
   const accepts = []
 
@@ -123,19 +123,19 @@ function Type (type, status) {
   }
 }
 
-function TypeJson (status) {
+export function TypeJson (status) {
   return Type('json', status)
 }
 
-function TypeText (status) {
+export function TypeText (status) {
   return Type('text', status)
 }
 
-function TypeStream (status) {
+export function TypeStream (status) {
   return Type('stream', status)
 }
 
-function TypeBuffer (status) {
+export function TypeBuffer (status) {
   return Type('buffer', status)
 }
 
@@ -144,7 +144,7 @@ function TypeBuffer (status) {
   return Type('file', status)
 } */
 
-function Service () {
+export function Service () {
   return function (Class) {
     getMeta(Class)[META_SERVICE_NAME] = {
       name: Class.name.toLowerCase()
@@ -152,29 +152,8 @@ function Service () {
   }
 }
 
-function Module (name) {
+export function Module (name) {
   return function (Class) {
     getMeta(Class)[META_NAME] = name || Class.name.toLowerCase()
   }
 }
-
-module.exports.META = META
-module.exports.META_ROUTE = META_ROUTE
-module.exports.META_NAME = META_NAME
-module.exports.META_SERVICE_NAME = META_SERVICE_NAME
-
-module.exports.Controller = Controller
-module.exports.Get = Get
-module.exports.Post = Post
-module.exports.Put = Put
-module.exports.Delete = Delete
-
-module.exports.Accepts = Accepts
-
-module.exports.TypeJson = TypeJson
-module.exports.TypeText = TypeText
-module.exports.TypeStream = TypeStream
-module.exports.TypeBuffer = TypeBuffer
-
-module.exports.Service = Service
-module.exports.Module = Module

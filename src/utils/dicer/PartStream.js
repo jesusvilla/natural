@@ -1,6 +1,6 @@
-const { Readable } = require('stream')
+import { Readable } from 'stream'
 
-module.exports = class PartStream extends Readable {
+export default class PartStream extends Readable {
   _read (n) {
 
   }
