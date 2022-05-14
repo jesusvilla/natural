@@ -1,4 +1,5 @@
 import { hasBody } from '../../utils/is.js'
+import { toLowerCase } from '../../utils/string.js'
 
 // @doc: https://github.com/nodejs/node/blob/master/lib/_http_server.js
 const STATUS_CODES = {
@@ -77,6 +78,8 @@ const cachedObject = ({ context, name, cb, freeze }) => {
   return context[name]
 }
 
+const NOOP = () => {}
+
 export class ServerRequest {
   constructor (req) {
     this.raw = req
@@ -84,15 +87,11 @@ export class ServerRequest {
     this._context = {
       url: new URL(this.raw.url)
     }
-    this.url = this._context.url.pathname + this._context.url.search
+    this.url = this._context.url.pathname + '?' + this._context.url.search
   }
 
   async _getBody () {
     const contentType = this.raw.headers.get('content-type')
-
-    if (this.method === 'GET' || this.method === 'HEAD') {
-      return {}
-    }
 
     if (contentType.includes('application/json')) {
       return await this.raw.json()
@@ -133,7 +132,7 @@ export class ServerRequest {
     return this._context.url.origin
   }
 
-  get query () {
+  /* get query () {
     return cachedObject({
       context: this._context,
       name: 'query',
@@ -146,17 +145,18 @@ export class ServerRequest {
       },
       freeze: true
     })
-  }
+  } */
 }
 
 export class ServerResponse {
   constructor () {
-    this._context = {}
+    this._context = { headers: {} }
     this.statusCode = 200
+    // this.statusMessage = undefined
   }
 
-  send (body) {
-    // @doc: https://developers.cloudflare.com/workers/runtime-apis/response/
+  end (body) {
+    /* // @doc: https://developers.cloudflare.com/workers/runtime-apis/response/
     if (body !== null && typeof body === 'object') {
       body = JSON.stringify(body)
     }
@@ -164,18 +164,31 @@ export class ServerResponse {
     return new Response(body, {
       headers: this._context.headers,
       status: this.statusCode
-    })
+    }) */
+    if (this.finished) {
+      // ToDo
+      return this
+    }
+
+    this.finished = true
+    this._context.statusText = this.statusMessage || STATUS_CODES[this.statusCode] || 'OK'
+    this._context.body = body
   }
 
   setHeader (name, value) {
-    if (this._context.headers === undefined) {
-      this._context.headers = {}
-    }
     if (Array.isArray(value)) {
       value = value.join(', ')
     }
     this._context.headers[name] = value
     return this
+  }
+
+  getHeader (name) {
+    return this._context.headers[toLowerCase(name)]
+  }
+
+  removeHeader (name) {
+    delete this._.context.headers[toLowerCase(name)]
   }
 
   writeHead (statusCode, headers) { // statusMessage
@@ -201,23 +214,30 @@ const handleRequest = async (config, event, cb) => {
     request.body = {}
   }
 
-  console.log('req', request, request.params)
-  console.log('res', response)
-
   await cb(request, response)
-  return response
+
+  return new Response(response._context.body, {
+    headers: response._context.headers,
+    status: response.statusCode,
+    statusText: 'HOla'
+  })
 }
 
 class Server {
-  constructor (config, cb) {
+  constructor (config, cb = NOOP) {
     this.config = config
     this.cb = cb
+    addEventListener('fetch', (event) => {
+      /* const request = new config.ServerRequest(event.request)
+      const response = new config.ServerResponse(event.request)
+
+      request.body = {}
+      cb(request, response) */
+      event.respondWith(handleRequest(this.config, event, this.cb))
+    })
   }
 
   listen (port, cb) {
-    addEventListener('fetch', (event) => {
-      event.respondWith(handleRequest(this.config, event, this.cb))
-    })
     cb()
   }
 }
@@ -225,6 +245,3 @@ class Server {
 export const createServer = (config, cb) => {
   return new Server(config, cb)
 }
-
-// 1. npm run dev
-// 2. otra terminal: npm run dev:router:worker

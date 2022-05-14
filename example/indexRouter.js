@@ -43,17 +43,20 @@ function createRoutes (router) {
     .post('/user', (request, response) => {
       response.end('')
     })
-    /* .get('/user/sub/route', async (request, response) => {
+    .get('/user/sub/route', async (request, response) => {
       console.log('second...', request.params.middleware)
       // response.end(request.params.middleware)
       return request.params.middleware + ''
     })
     .use('/user', (request, response, next) => {
       console.log('first...')
+      setTimeout(() => {
+        console.log('first:2')
+        next()
+      }, 500)
       request.params.middleware = 1
-      // next()
-      next(new Error('Ooops'))
-    }) */
+      // next(new Error('Ooops'))
+    })
 
   /* .route({
       url: '/test/simple/:id',
@@ -96,7 +99,7 @@ async function bootstrap () {
   })
   try {
     createRoutes(router)
-    const port = await router.listen(3000)
+    const port = await router.listen(3000) // ignore port for worker
     console.log(`Listen http://localhost:${port}`)
   } catch (error) {
     console.log('Error:', error)

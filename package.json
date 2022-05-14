@@ -19,7 +19,7 @@
     "dev": "rollup -c -w",
     "dev:debug": "nodemon --exec babel-node --inspect ./src/example/index.js",
     "dev:router": "nodemon ./example/indexRouter.js",
-    "dev:router:worker": "wrangler dev ./example/router.bundle.js",
+    "dev:router:worker": "miniflare ./example/router.bundle.js -w -d -p 3000",
     "dev:router:clinic": "clinic doctor -- node ./example/indexRouter.js",
     "dev:router:debug": "nodemon --inspect ./src/example/indexRouter.js",
     "build": "cross-env BABEL_ENV=production babel src -d lib --copy-files",

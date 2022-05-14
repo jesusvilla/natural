@@ -138,7 +138,7 @@ export class ServerResponse extends EventEmitter /* extends Writable */ {
   constructor (uRequest, uResponse, uServer) {
     super()
 
-    this.res = uResponse
+    this.raw = uResponse
     this.server = uServer
     this.finished = false
 
@@ -189,7 +189,7 @@ export class ServerResponse extends EventEmitter /* extends Writable */ {
   }
 
   write (data) {
-    this.res.write(data)
+    this.raw.write(data)
   }
 
   writeHead (statusCode) {
@@ -218,17 +218,13 @@ export class ServerResponse extends EventEmitter /* extends Writable */ {
 
     const statusMessage = this.statusMessage || STATUS_CODES[this.statusCode] || 'OK'
 
-    this.res.writeStatus(`${this.statusCode} ${statusMessage}`)
+    this.raw.writeStatus(`${this.statusCode} ${statusMessage}`)
 
     if (!this._isWritable) {
       writeAllHeaders(this)
     }
 
     this.finished = true
-    this.res.end(data)
-  }
-
-  getRaw () {
-    return this.res
+    this.raw.end(data)
   }
 }

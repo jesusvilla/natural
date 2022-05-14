@@ -7,7 +7,7 @@ import { isUndefined, hasBody } from '../../utils/is.js'
 export const createServer = (config, cb) => {
   const newCB = (request, response) => {
     if (hasBody(request.method)) {
-      setBody({}, request, response)
+      setBody(config.router, request, response)
     } else {
       request.body = {}
       cb(request, response)

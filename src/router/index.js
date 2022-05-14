@@ -182,7 +182,7 @@ class NaturalRouter extends BaseRouter {
       ServerRequest: extendRequest(ServerRequest),
       ssl: this.config.ssl
     }, (request, response) => {
-      this.lookup(request, response)
+      return this.lookup(request, response)
     })
 
     return new Promise((resolve, reject) => {
@@ -261,9 +261,9 @@ class NaturalRouter extends BaseRouter {
     }
 
     const params = getParams(infoURL[1]) // => { search, query }
-    request.path = infoURL[0]
     request.search = params.search
     request.query = params.query
+    request.path = infoURL[0]
     request.params = match.params
 
     try {
