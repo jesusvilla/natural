@@ -156,15 +156,6 @@ export class ServerResponse {
   }
 
   end (body) {
-    /* // @doc: https://developers.cloudflare.com/workers/runtime-apis/response/
-    if (body !== null && typeof body === 'object') {
-      body = JSON.stringify(body)
-    }
-
-    return new Response(body, {
-      headers: this._context.headers,
-      status: this.statusCode
-    }) */
     if (this.finished) {
       // ToDo
       return this
@@ -216,6 +207,7 @@ const handleRequest = async (config, event, cb) => {
 
   await cb(request, response)
 
+  // @doc: https://developers.cloudflare.com/workers/runtime-apis/response/
   return new Response(response._context.body, {
     headers: response._context.headers,
     status: response.statusCode,
@@ -228,11 +220,6 @@ class Server {
     this.config = config
     this.cb = cb
     addEventListener('fetch', (event) => {
-      /* const request = new config.ServerRequest(event.request)
-      const response = new config.ServerResponse(event.request)
-
-      request.body = {}
-      cb(request, response) */
       event.respondWith(handleRequest(this.config, event, this.cb))
     })
   }

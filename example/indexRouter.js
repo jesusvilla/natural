@@ -46,7 +46,7 @@ function createRoutes (router) {
     .get('/user/sub/route', async (request, response) => {
       console.log('second...', request.params.middleware)
       // response.end(request.params.middleware)
-      return request.params.middleware + ''
+      return { middleware: request.params.middleware }
     })
     .use('/user', (request, response, next) => {
       console.log('first...')

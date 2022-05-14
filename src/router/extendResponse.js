@@ -1,4 +1,5 @@
 import ResponseTypes from './ResponseTypes.js'
+import { isObject } from '../utils/is.js'
 
 export default (Response) => {
   return class ServerResponse extends Response {
@@ -51,12 +52,12 @@ export default (Response) => {
       } else if (typeData === 'string' || typeData === 'number') {
         ResponseTypes.text(this, payload)
       } else if (typeData === 'object') {
-        if (payload instanceof Buffer) {
-          ResponseTypes.buffer(this, payload)
-        } else if (typeof payload.pipe === 'function') {
+        if (isObject(payload)) {
+          ResponseTypes.json(this, payload)
+        } else if (typeof payload.pipe === 'function' || typeof payload.pipeTo === 'function') {
           ResponseTypes.stream(this, payload)
         } else {
-          ResponseTypes.json(this, payload)
+          ResponseTypes.buffer(this, payload)
         }
       } else {
         this.end(payload + '')

@@ -149,9 +149,7 @@ class NaturalRouter extends BaseRouter {
           message: error.message,
           data: error.data
         })
-        if (process.env.NODE_ENV !== 'production') {
-          console.error(error)
-        }
+        console.error(error)
       },
       maxBodySize: 1e7 // 10MB
       // tmpDir: require('os').tmpdir(),
