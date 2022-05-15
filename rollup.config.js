@@ -1,4 +1,5 @@
 const run = require('@rollup/plugin-run')
+const { babel } = require('@rollup/plugin-babel')
 // const commonjs = require('@rollup/plugin-commonjs')
 
 const dev = process.env.NODE_ENV !== 'production'
@@ -9,5 +10,5 @@ export default {
     file: 'example/router.bundle.js',
     format: 'cjs'
   },
-  plugins: [dev && run()]
+  plugins: [dev && run(), babel()]
 }

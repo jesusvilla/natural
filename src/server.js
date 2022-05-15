@@ -1,11 +1,11 @@
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
 
-const { META, META_ROUTE, META_NAME, Request, Response } = require('./common.js')
-const Validator = require('fastest-validator')
-const { forEach } = require('./utils/object.js')
+import { META, META_ROUTE, META_NAME, Request, Response } from './common.js'
+import Validator from 'fastest-validator'
+import { forEach } from './utils/object.js'
+import Router from './router/index.js'
 // const { isPromise, isAsync } = require('./utils/is')
-const Router = require('./router/indexNew.js')
 
 const sendTryCatch = async (paramsRoute, onError, cfgRouter, ctrl, nameMethod, req, res) => {
   try {
@@ -21,7 +21,7 @@ const sendTryCatch = async (paramsRoute, onError, cfgRouter, ctrl, nameMethod, r
   }
 }
 
-module.exports = class Server {
+export default class Server {
   constructor (config = {}) {
     this.config = Object.assign({
       modules: {}, // { Module: ClassModule }

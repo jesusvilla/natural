@@ -1,4 +1,4 @@
-const { Service } = require('@natural/common')
+import { Service } from '@natural/common'
 
 const data = [
   { id: 1, name: 'Victor' },
@@ -23,4 +23,4 @@ class Developer {
   }
 }
 
-module.exports = Developer
+export default Developer

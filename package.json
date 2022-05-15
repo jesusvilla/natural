@@ -1,6 +1,6 @@
 {
   "name": "natural-framework",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "",
   "main": "lib/server.js",
   "engines": {
@@ -43,17 +43,16 @@
     "@babel/plugin-proposal-class-properties": "^7.10.1",
     "@babel/plugin-proposal-decorators": "^7.10.1",
     "@babel/preset-env": "^7.10.2",
+    "@rollup/plugin-babel": "^5.3.1",
     "@rollup/plugin-commonjs": "^22.0.0",
     "@rollup/plugin-run": "^2.1.0",
     "autocannon": "^4.6.0",
     "babel-eslint": "^10.1.0",
     "babel-plugin-module-resolver": "^4.0.0",
     "cross-env": "^7.0.2",
-    "nodemon": "^2.0.4",
+    "miniflare": "^2.4.0",
     "rollup": "^2.72.0",
-    "rollup-plugin-babel": "^4.4.0",
-    "standard": "^14.3.4",
-    "wrangler": "^2.0.2"
+    "standard": "^14.3.4"
   },
   "dependencies": {
     "fastest-validator": "^1.4.2",

@@ -1,12 +1,14 @@
-const NaturalJS = require('@natural/server')
-const station = require('./station')
+import NaturalJS from '@natural/server'
+import * as HttpServer from '@natural/router/server/uws'
+
+import station from './station/index.js'
 
 async function bootstrap () {
   const app = new NaturalJS({
+    http: HttpServer,
     modules: {
       station
     }
-    // type: 'uws',
     // tmpDir: __dirname
   })
   try {

@@ -1,5 +1,5 @@
-const { Module } = require('@natural/common')
-const path = require('path')
+import { Module } from '@natural/common'
+import path from 'path'
 
 @Module({
   controllers: path.resolve(__dirname, './controllers'),
@@ -9,4 +9,4 @@ const path = require('path')
 
 class Station {}
 
-module.exports = Station
+export default Station

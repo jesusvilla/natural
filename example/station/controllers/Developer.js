@@ -1,5 +1,5 @@
-const { Controller, Accepts, Get, TypeJson, Request, Response } = require('@natural/common')
-const DeveloperService = require('../services/Developer')
+import { Controller, Accepts, Get, TypeJson, Request, Response } from '@natural/common'
+import DeveloperService from '../services/Developer'
 
 @Controller('developers')
 @Accepts(Request)
@@ -32,4 +32,4 @@ class Developer {
   }
 }
 
-module.exports = Developer
+export default Developer

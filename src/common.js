@@ -1,7 +1,7 @@
-import decorators from './decorators.js'
+import { META } from './decorators.js'
 
-const Request = decorators.META + '_Request'
-const Response = decorators.META + '_Response'
+const Request = META + '_Request'
+const Response = META + '_Response'
 
-export default decorators
+export * from './decorators.js'
 export { Request, Response }

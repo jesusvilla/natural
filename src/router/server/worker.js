@@ -1,6 +1,7 @@
 import { hasBody } from '../../utils/is.js'
 import { toLowerCase } from '../../utils/string.js'
 
+/*
 // @doc: https://github.com/nodejs/node/blob/master/lib/_http_server.js
 const STATUS_CODES = {
   100: 'Continue', // RFC 7231 6.2.1
@@ -66,7 +67,7 @@ const STATUS_CODES = {
   509: 'Bandwidth Limit Exceeded',
   510: 'Not Extended', // RFC 2774 7
   511: 'Network Authentication Required' // RFC 6585 6
-}
+} */
 
 const cachedObject = ({ context, name, cb, freeze }) => {
   if (context[name] === undefined) {
@@ -131,7 +132,6 @@ export class ServerRequest {
   get origin () {
     return this._context.url.origin
   }
-
   /* get query () {
     return cachedObject({
       context: this._context,
@@ -162,7 +162,7 @@ export class ServerResponse {
     }
 
     this.finished = true
-    this._context.statusText = this.statusMessage || STATUS_CODES[this.statusCode] || 'OK'
+    // this._context.statusText = this.statusMessage || STATUS_CODES[this.statusCode] || 'OK'
     this._context.body = body
   }
 
@@ -187,12 +187,6 @@ export class ServerResponse {
     this.statusCode = statusCode
     Object.assign(this._context.headers, headers)
   }
-
-  redirect (status, location) {
-    this.writeHead(301, {
-      Location: location
-    })
-  }
 }
 
 const handleRequest = async (config, event, cb) => {
@@ -210,8 +204,7 @@ const handleRequest = async (config, event, cb) => {
   // @doc: https://developers.cloudflare.com/workers/runtime-apis/response/
   return new Response(response._context.body, {
     headers: response._context.headers,
-    status: response.statusCode,
-    statusText: 'HOla'
+    status: response.statusCode
   })
 }
 

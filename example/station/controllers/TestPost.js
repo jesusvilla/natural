@@ -1,4 +1,4 @@
-const { Controller, Accepts, Post, Get, TypeJson } = require('@natural/common')
+import { Controller, Accepts, Post, Get, TypeJson } from '@natural/common'
 
 // Registered route: /post
 @Controller('post')
@@ -22,4 +22,4 @@ class TestPost {
   }
 }
 
-module.exports = TestPost
+export default TestPost
