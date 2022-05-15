@@ -6,9 +6,10 @@ Fastest Framework for Node.js. Written in pure javascript (ES6+)
   - Pure native HTTP Server.
   - Based on Polka, Restana, Fastify, Express (for the creation of the Router).
   - Based on NestJS (framework concepts and abstraction).
+  - Support Serverless: Workers Cloudflare, Comming Soon: AWS Lambda, Google Cloud Functions
 
 ## Requirements
-Node.js v10+
+Node.js v14+ (v16+ for Workers)
 
 ## Installation (/example)
 
@@ -21,8 +22,10 @@ $ npm i -S natural-framework
 
 NaturalRouter
 ```js
-const NaturalRouter = require('natural-framework/lib/router')
-// const path = require('path')
+import NaturalRouter from 'natural-framework/lib/router'
+import * as HttpServer from 'natural-framework/lib/router/server/uws'
+// for Workers Cloudflare use:
+// import * as HttpServer from 'natural-framework/lib/router/server/worker'
 
 function createRoutes (router) {
   router
@@ -66,7 +69,7 @@ function createRoutes (router) {
 
 async function bootstrap () {
   const router = new NaturalRouter({
-    // type: 'uws', // 'uws' or 'node'
+    http: HttpServer
     /* ssl: {
       key: path.join(__dirname, './security/cert.key'),
       cert: path.join(__dirname, './security/cert.pem')
@@ -87,10 +90,12 @@ bootstrap()
 NaturalJS
 ```js
 import NaturalJS from 'natural-framework'
+import * as HttpServer from 'natural-framework/lib/router/server/uws'
 import station from './station'
 
 async function bootstrap () {
   const app = new NaturalJS({
+    http: HttpServer,
     modules: {
       station
     }
@@ -112,7 +117,7 @@ bootstrap()
 ### Controller
 
 ```js
-import { Controller, Accepts, Get, TypeJson } from '@natural/common'
+import { Controller, Accepts, Get, TypeJson } from 'natural-framework/common'
 
 // Registered route: /test
 @Controller('test')
@@ -177,7 +182,7 @@ $ npm run dev
 ## ToDo
 
  - Providers: Services, Models, ...
- - Lambda functions...
+ - Serverless...
 
 License
 ----
