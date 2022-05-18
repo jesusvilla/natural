@@ -1,12 +1,12 @@
 import uWS from 'uWebSockets.js'
 import { STATUS_CODES } from 'http'
 // import EventEmitter from 'events'
-import EventEmitter from '../../utils/EventEmitter.js'
+import EventEmitter from '../utils/EventEmitter.js'
 // import { Writable, Readable } from 'stream'
-import { toString, toLowerCase } from '../../utils/string.js'
-import { forEach } from '../../utils/object.js'
-import { isUndefined, hasBody } from '../../utils/is.js'
-import setBody from '../body.js'
+import { toString, toLowerCase } from '../utils/string.js'
+import { forEach } from '../utils/object.js'
+import { isUndefined, hasBody } from '../utils/is.js'
+import setBody from '../utils/setBody.js'
 
 const NOOP = () => {}
 

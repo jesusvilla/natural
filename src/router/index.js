@@ -1,5 +1,5 @@
 import { newId } from '../utils/string.js'
-import { isNumber, isUndefined } from '../utils/is.js'
+import { isUndefined, isFunction } from '../utils/is.js'
 import { extend } from '../utils/object.js'
 import ResponseTypes from './ResponseTypes.js'
 import extendResponse from './extendResponse.js'
@@ -19,6 +19,22 @@ const sortRoutesNode = (arr) => {
   arr.sort((a, b) => {
     return (a.nodes - b.nodes) || (a.origin - b.origin)
   })
+}
+
+const ON_BAD_URL = (path, request, response) => {
+  response.statusCode = 400
+  response.end(`Bad path: ${path}`)
+}
+
+const DEFAULT_ROUTE = (request, response) => {
+  response.statusCode = 404
+  response.end()
+}
+
+const ON_ERROR = (error, request, response) => {
+  response.statusCode = 400
+  response.end(`Error: ${error.message}`)
+  console.error(error)
 }
 
 class Cache {
@@ -57,31 +73,42 @@ class BaseRouter {
     this.put = this.on.bind(this, 'PUT')
   }
 
-  use (route, ...fns) {
-    let handlers
+  use (route, ...handlers) {
+    if (arguments.length === 0) {
+      return this
+    }
+
     if (arguments.length === 1) {
       route = '/'
       handlers = [arguments[0]]
-    } else {
-      handlers = fns
     }
 
-    const config = parse(route, true)
-    config.method = METHOD_ALL
-    config.handlers = [].concat.apply([], handlers).map(h => h.bind(this))
-    config.nodes = getNodes(route)
-    this.middlewares.push(config)
-    sortRoutesNode(this.middlewares)
+    if (handlers[0] instanceof NaturalRouter) {
+      const { id } = handlers[0]
+      if (isUndefined(this.modules[id])) {
+        this.modules[id] = parse(route, true).pattern
+      } else {
+        console.warn(`SubRouter ${id} is already defined`)
+      }
+    } else {
+      const config = parse(route, true)
+      config.method = METHOD_ALL
+      config.handlers = [].concat.apply([], handlers).map(h => h.bind(this))
+      config.nodes = getNodes(route)
+      this.middlewares.push(config)
+      sortRoutesNode(this.middlewares)
+    }
+
     return this
   }
 
-  on (method, route, handler) {
+  on (method, route, ...handlers) {
     const config = parse(route)
     config.method = method
-    config.handlers = [handler.bind(this)]
+    config.handlers = [].concat.apply([], handlers).map(h => h.bind(this))
     config.nodes = getNodes(route)
     this.routes.push(config)
-    sortRoutesNode(this.middlewares)
+    sortRoutesNode(this.routes)
     return this
   }
 
@@ -131,49 +158,29 @@ class BaseRouter {
 }
 
 class NaturalRouter extends BaseRouter {
-  constructor (config = {}, id) {
+  constructor (config = {}) {
     super()
-    this.id = id || newId() // Identifier the router
+    this.id = config.id || newId() // Identifier the router
     this._cachedRoutes = new Cache()
     this.config = extend({
-      defaultRoute: (req, res) => {
-        res.statusCode = 404
-        res.end()
-      },
-      errorHandler: (error, req, res) => {
-        const errorCode = error.status || error.code || error.statusCode
-        const statusCode = isNumber(errorCode) ? errorCode : 500
-        res.status(statusCode)
-        ResponseTypes.json(res, {
-          code: statusCode,
-          message: error.message,
-          data: error.data
-        })
-        console.error(error)
-      },
+      defaultRoute: DEFAULT_ROUTE,
+      onBadUrl: ON_BAD_URL,
+      onError: ON_ERROR,
       maxBodySize: 1e7 // 10MB
       // tmpDir: require('os').tmpdir(),
       // ssl: { key, cert }
+      // server: { createEvent, ServerRequest, ServerRespose }
     }, config)
     // this.config.tmpDir = this.config.tmpDir || require('os').tmpdir()
-    // only test
-    // this.config.http = this.config.http || require(`./server/${this.config.type}.js`)
-    if (this.config.http === undefined) {
-      throw new Error('config.http is not defined: remember import from router/server/{type}.js')
+    if (this.config.server === undefined) {
+      throw new Error('config.server is not defined: remember import from server/{type}')
     }
-    /* this.config.http = {
-      createEvent,
-      ServerRequest,
-      ServerResponse
-    } */
     this.modules = {}
-    // this.server = undefined
-    // this.port = undefined
   }
 
   listen (port = 3000) {
     this.port = port
-    const { ServerResponse, ServerRequest, createServer } = this.config.http
+    const { ServerResponse, ServerRequest, createServer } = this.config.server
     this.server = createServer({
       router: this,
       ServerResponse: extendResponse(ServerResponse),
@@ -193,62 +200,6 @@ class NaturalRouter extends BaseRouter {
       })
     })
   }
-
-  /* _constructorWorker () {
-    // super()
-    this.config = {
-      http: {
-        createEvent,
-        ServerRequest,
-        ServerResponse
-      }
-    }
-  }
-
-  async _listenWorker (event, context) {
-    const { http } = this.config
-    extendResponse(http.ServerResponse)
-    const request = new http.ServerRequest({ event, context })
-    const response = new http.ServerResponse({ event, context })
-    await this.lookup(request, response)
-    return createEventWorker(request, response)
-  } */
-
-  /* async lookupCache (request, response) {
-    const indexCache = request.method + '||' + request.url
-    if (!this._cachedRoutes.has(indexCache)) {
-      const [path, search] = request.url.split('?')
-      const match = this._find(request.method, path)
-      if (match) {
-        const params = getParams(search) // { search, query }
-        this._cachedRoutes.set(indexCache, {
-          path,
-          search: params.search,
-          query: params.query,
-          params: match.params,
-          handlers: match.handlers,
-          exist: true
-        })
-      } else {
-        this._cachedRoutes.set(indexCache, {
-          exist: false
-        })
-      }
-    }
-
-    const routeCache = this._cachedRoutes.get(indexCache)
-    if (routeCache.exist) {
-      request.path = routeCache.path
-      request.search = routeCache.search
-      request.query = routeCache.query
-      request.params = routeCache.params
-      await routeCache.handlers[0](request, response)
-      return
-    }
-
-    response.statusCode = 404
-    response.end('No exist route')
-  } */
 
   async lookup (request, response) {
     const infoURL = request.url.split('?')
@@ -290,51 +241,42 @@ class NaturalRouter extends BaseRouter {
         this.config.defaultRoute(request, response)
       }
     } catch (error) {
-      this.config.errorHandler(error, request, response)
+      this.config.onError(error, request, response)
     }
   }
-}
 
-/*  WORKER CLOUDFLARE
-const STATUS_CODES = {
-  404: 'Not Found',
-  200: 'OK',
-  500: 'Internal Server Error'
-}
+  /**
+   * @doc https://www.fastify.io/docs/latest/Routes/#routes-option
+   * @param {Object} config
+   *
+   * @param {string} config.method - Method UpperCase
+   * @param {string|RegExp} config.method - Method UpperCase
+   * @param {function} config.handler - Callback
+   */
+  route ({ method, url, handler, type, preHandler }) {
+    // method, route, ...fns
+    const config = parse(url)
+    config.method = method
+    config.handlers = []
 
-class ServerRequest {
-  constructor ({ event, context }) {
-    this.method = event.request.method
-    const url = new URL(event.request.url)
-    this.path = url.pathname
-    // this.query = Object.fromEntries(url.searchParams)
-    const { search, query } = getParams(url.searchParams.toString())
-    this.search = search
-    this.query = query
-  }
-}
-
-class ServerResponse {
-  constructor ({ event, context }) {
-    this.statusCode = 200
-    // this.statusMessage = undefined
-  }
-
-  end (body) {
-    this.body = body
-
-    if (this.statusMessage === undefined) {
-      this.statusMessage = STATUS_CODES[this.statusCode] || 'OK'
+    if (isFunction(preHandler)) {
+      preHandler._type = type
+      config.handlers.push(preHandler)
     }
+
+    if (isFunction(handler)) {
+      handler._type = type
+      config.handlers.push(handler)
+    }
+
+    this.routes.push(config)
+    return this
+  }
+
+  newRouter (id) {
+    return new NaturalRouter({ ...this.config, id })
   }
 }
-
-function createEventWorker (request, response) {
-  return new Response(response.body, {
-    status: response.statusCode,
-    statusText: response.statusMessage
-  })
-} */
 
 NaturalRouter.ResponseTypes = ResponseTypes
 

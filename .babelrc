@@ -9,9 +9,10 @@
       ["@babel/plugin-proposal-class-properties", { "loose" : true }],
       ["module-resolver", {
           "alias": {
-            "@natural/server": "./src/server",
-            "@natural/router": "./src/router",
-            "@natural/common": "./src/common"
+            "natural-framework": "./src/index.js",
+            "natural-framework/server": "./src/server",
+            "natural-framework/router": "./src/router",
+            "natural-framework/common": "./src/common"
           }
       }]
   ]

@@ -29,9 +29,9 @@ export default (Response) => {
       return this
     }
 
-    // https://github.com/jkyberneees/ana/blob/master/libs/response-extensions.js
-    // https://expressjs.com/en/4x/api.html#res.send
-    // https://www.fastify.io/docs/latest/Reply/#senddata
+    // @doc https://github.com/jkyberneees/ana/blob/master/libs/response-extensions.js
+    // @doc https://expressjs.com/en/4x/api.html#res.send
+    // @doc https://www.fastify.io/docs/latest/Reply/#senddata
     send (payload, type) {
       if (type !== undefined) {
         // Automatic response

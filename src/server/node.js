@@ -1,8 +1,8 @@
 import { ServerResponse, IncomingMessage, createServer as HttpCreateServer } from 'http'
 import https from 'https'
 import { readFileSync } from 'fs'
-import setBody from '../body.js'
-import { isUndefined, hasBody } from '../../utils/is.js'
+import setBody from '../utils/setBody.js'
+import { isUndefined, hasBody } from '../utils/is.js'
 
 export const createServer = (config, cb) => {
   const newCB = (request, response) => {

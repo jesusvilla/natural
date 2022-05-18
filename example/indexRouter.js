@@ -1,4 +1,4 @@
-import * as HttpServer from '../src/router/server/worker.js'
+import * as HttpServer from '../src/server/worker.js'
 import NaturalRouter from '../src/router/index.js'
 // const NaturalRouter = require('../src/router/index2.js') // '@natural/router' // ../src/router
 // const path = require('path')
@@ -90,7 +90,7 @@ function createRoutes (router) {
 async function bootstrap () {
   const router = new NaturalRouter({
     // tmpDir: require('os').tmpdir
-    http: HttpServer
+    server: HttpServer
     // type: 'uws'
     /* ssl: {
       key: path.join(__dirname, './security/cert.key'),
