@@ -11,13 +11,13 @@ module.exports = (test) => {
 
   test.serial('GET: /user/44', async (t) => {
     const param = '44'
-    const response = await request('http://localhost:3000/user/' + param)
+    const response = await request(`http://localhost:3000/user/${param}`)
     t.is(response.statusCode, 200)
     t.is(await response.body.text(), param)
   })
 
   test.serial('POST: /user', async (t) => {
-    const response = await request('http://localhost:3000/user/body', {
+    const response = await request('http://localhost:3000/user', {
       method: 'POST',
       headers: {
         'content-type': 'application/json'
