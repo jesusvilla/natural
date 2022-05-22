@@ -1,0 +1,26 @@
+bench:vs:2:
+
+natural
+1. latency: 0.40ms, req/sec: 216908.8
+2. latency: 0.41ms, req/sec: 218086.4
+3. latency: 0.40ms, req/sec: 220441.6
+4. latency: 0.41ms, req/sec: 210432.0
+
+1 cambio
+
+1. latency: 0.42ms, req/sec: 219929.6
+2. latency: 0.42ms, req/sec: 223641.6
+
+2 cambio
+
+1. latency: 0.41ms, req/sec: 220787.2
+2. latency: 0.41ms, req/sec: 219865.6
+
+3 cambio + actualizacion uwebsocket
+
+1. latency: 0.42ms, req/sec: 221747.2
+2. latency: 0.40ms, req/sec: 218496.0
+
+4 actualizacion uwebsocket (node 14)  index2.js
+1. latency: 0.42ms, req/sec: 217305.6
+2. latency: 0.42ms, req/sec: 222156.8

@@ -2,14 +2,13 @@
   "comments": false,
   "minified": true,
   "presets": [
-      ["@babel/preset-env", { "targets": { "node": 14 }}]
+      ["@babel/preset-env", { "targets": { "node": 14 }, "modules": false }]
   ],
   "plugins": [
       ["@babel/plugin-proposal-decorators", { "legacy": true }],
       ["@babel/plugin-proposal-class-properties", { "loose" : true }],
       ["module-resolver", {
           "alias": {
-            "natural-framework": "./src/index.js",
             "natural-framework/server": "./src/server",
             "natural-framework/router": "./src/router",
             "natural-framework/common": "./src/common"

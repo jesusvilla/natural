@@ -1,4 +1,4 @@
-export default (search) => {
+export default (search = '') => {
   if (search === '') {
     return {
       search: '?',
