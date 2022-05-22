@@ -1,6 +1,9 @@
 import { hasBody } from '../utils/is.js'
 import { toLowerCase } from '../utils/string.js'
 
+const NOOP = () => {}
+const addEvent = globalThis.addEventListener || NOOP
+
 /*
 // @doc: https://github.com/nodejs/node/blob/master/lib/_http_server.js
 const STATUS_CODES = {} */
@@ -14,8 +17,6 @@ const cachedObject = ({ context, name, cb, freeze }) => {
   }
   return context[name]
 }
-
-const NOOP = () => {}
 
 export class ServerRequest {
   constructor (req) {
@@ -124,37 +125,39 @@ export class ServerResponse {
     Object.assign(this._context.headers, headers)
   }
 }
-
-const handleRequest = async (config, event, cb) => {
-  const request = new config.ServerRequest(event.request)
-  const response = new config.ServerResponse(event.request)
-
-  if (hasBody(request.method)) {
-    request.body = await request._getBody()
-  } else {
-    request.body = {}
-  }
-
-  await cb(request, response)
-
-  // @doc: https://developers.cloudflare.com/workers/runtime-apis/response/
-  return new Response(response._context.body, {
-    headers: response._context.headers,
-    status: response.statusCode
-  })
-}
-
 class Server {
   constructor (config, cb = NOOP) {
     this.config = config
     this.cb = cb
-    addEventListener('fetch', (event) => {
-      event.respondWith(handleRequest(this.config, event, this.cb))
-    })
   }
 
   listen (port, cb) {
+    const handler = this.run()
+    addEvent('fetch', (event) => {
+      event.respondWith(handler(event.request))
+    })
     cb()
+  }
+
+  run () {
+    return async (wReq) => {
+      const request = new this.config.ServerRequest(wReq)
+      const response = new this.config.ServerResponse(wReq)
+
+      if (hasBody(request.method)) {
+        request.body = await request._getBody()
+      } else {
+        request.body = {}
+      }
+
+      await this.cb(request, response)
+
+      // @doc: https://developers.cloudflare.com/workers/runtime-apis/response/
+      return new Response(response._context.body, {
+        headers: response._context.headers,
+        status: response.statusCode
+      })
+    }
   }
 }
 

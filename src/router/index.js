@@ -201,21 +201,36 @@ class NaturalRouter extends BaseRouter {
     })
   }
 
+  run () {
+    // For Serverless App
+    const { ServerResponse, ServerRequest, createServer } = this.config.server
+    this.server = createServer({
+      router: this,
+      ServerResponse: extendResponse(ServerResponse),
+      ServerRequest: extendRequest(ServerRequest),
+      ssl: this.config.ssl
+    }, (request, response) => {
+      return this.lookup(request, response)
+    })
+
+    return this.server.run()
+  }
+
   async lookup (request, response) {
     const infoURL = request.url.split('?')
     const match = this._find(request.method, infoURL[0])
 
-    if (!match || match.handlers.length === 0) {
-      return this.config.defaultRoute(request, response)
-    }
-
-    const params = getParams(infoURL[1]) // => { search, query }
-    request.search = params.search
-    request.query = params.query
-    request.path = infoURL[0]
-    request.params = match.params
-
     try {
+      if (!match || match.handlers.length === 0) {
+        return this.config.defaultRoute(request, response)
+      }
+
+      const params = getParams(infoURL[1]) // => { search, query }
+      request.search = params.search
+      request.query = params.query
+      request.path = infoURL[0]
+      request.params = match.params
+
       const next = async (index) => {
         const handler = match.handlers[index]
 
@@ -275,6 +290,10 @@ class NaturalRouter extends BaseRouter {
 
   newRouter (id) {
     return new NaturalRouter({ ...this.config, id })
+  }
+
+  close () {
+    this.server.close()
   }
 }
 

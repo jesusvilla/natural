@@ -5,7 +5,7 @@ import setBody from '../utils/setBody.js'
 import { isUndefined, hasBody } from '../utils/is.js'
 
 export const createServer = (config, cb) => {
-  const newCB = (request, response) => {
+  const handler = (request, response) => {
     if (hasBody(request.method)) {
       setBody(config.router, request, response)
     } else {
@@ -13,19 +13,27 @@ export const createServer = (config, cb) => {
       cb(request, response)
     }
   }
+
+  let server
   if (isUndefined(config.ssl)) {
-    return HttpCreateServer({
+    server = HttpCreateServer({
       ServerResponse: config.ServerResponse,
       IncomingMessage: config.ServerRequest
-    }, newCB)
+    }, handler)
+  } else {
+    server = https.createServer({
+      ServerResponse: config.ServerResponse,
+      IncomingMessage: config.ServerRequest,
+      key: readFileSync(config.ssl.key),
+      cert: readFileSync(config.ssl.cert)
+    }, handler)
   }
 
-  return https.createServer({
-    ServerResponse: config.ServerResponse,
-    IncomingMessage: config.ServerRequest,
-    key: readFileSync(config.ssl.key),
-    cert: readFileSync(config.ssl.cert)
-  }, newCB)
+  server.run = () => {
+    return handler
+  }
+
+  return server
 }
 
 export { ServerResponse, IncomingMessage as ServerRequest }

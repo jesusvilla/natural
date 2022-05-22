@@ -22,6 +22,7 @@ const toBuffer = (ab) => {
 class Server {
   constructor (config, cb = NOOP) {
     this.config = config
+    this.cb = cb
     if (isUndefined(config.ssl)) {
       this.server = uWS.App({})
     } else {
@@ -31,16 +32,8 @@ class Server {
       })
     }
 
-    this.server.any('/*', (uRes, uReq) => {
-      const request = new config.ServerRequest(uReq, uRes, this.server)
-      const response = new config.ServerResponse(uReq, uRes, this.server)
-      if (hasBody(request.method)) {
-        setBody(config.router, request, response)
-      } else {
-        request.body = {}
-        cb(request, response)
-      }
-    })
+    const handler = this.run()
+    this.server.any('/*', handler)
     /* this.server._date = new Date().toUTCString()
     this._timer = setInterval(() => {
       this.server._date = new Date().toUTCString()
@@ -53,6 +46,19 @@ class Server {
 
       cb(socket ? undefined : new Error('uWebSocket Error unknown'))
     })
+  }
+
+  run () {
+    return (uRes, uReq) => {
+      const request = new this.config.ServerRequest(uReq, uRes, this.server)
+      const response = new this.config.ServerResponse(uReq, uRes, this.server)
+      if (hasBody(request.method)) {
+        setBody(this.config.router, request, response)
+      } else {
+        request.body = {}
+        this.cb(request, response)
+      }
+    }
   }
 
   close () {
