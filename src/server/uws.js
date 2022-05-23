@@ -1,7 +1,7 @@
 import uWS from 'uWebSockets.js'
 import { STATUS_CODES } from 'http'
-// import EventEmitter from 'events'
-import EventEmitter from '../utils/EventEmitter.js'
+import EventEmitter from 'events'
+// import EventEmitter from '../utils/EventEmitter.js'
 // import { Writable, Readable } from 'stream'
 import { toString, toLowerCase } from '../utils/string.js'
 import { forEach } from '../utils/object.js'
@@ -10,14 +10,14 @@ import setBody from '../utils/setBody.js'
 
 const NOOP = () => {}
 
-const toBuffer = (ab) => {
+/* const toBuffer = (ab) => {
   const buf = Buffer.alloc(ab.byteLength)
   const view = new Uint8Array(ab)
   for (let i = 0; i < buf.length; ++i) {
     buf[i] = view[i]
   }
   return buf
-}
+} */
 
 class Server {
   constructor (config, cb = NOOP) {
@@ -49,14 +49,14 @@ class Server {
   }
 
   run () {
-    return (uRes, uReq) => {
+    return async (uRes, uReq) => {
       const request = new this.config.ServerRequest(uReq, uRes, this.server)
       const response = new this.config.ServerResponse(uReq, uRes, this.server)
       if (hasBody(request.method)) {
         setBody(this.config.router, request, response)
       } else {
         request.body = {}
-        this.cb(request, response)
+        await this.cb(request, response)
       }
     }
   }
@@ -95,7 +95,7 @@ export class ServerRequest extends EventEmitter /* extends Readable */ {
       uResponse.onData((bytes, isLast) => {
         if (bytes.byteLength !== 0) {
           // this.push(toBuffer(bytes))
-          this.emit('data', toBuffer(bytes))
+          this.emit('data', Buffer.from(bytes))
         }
 
         if (isLast) {
@@ -123,20 +123,20 @@ export class ServerRequest extends EventEmitter /* extends Readable */ {
   }
 }
 
-const writeAllHeaders = (instance) => {
-  // instance.res.writeHeader('Date', instance.server._date)
-  // instance.res.writeHeader('Date', new Date().toUTCString())
+const writeAllHeaders = (response) => {
+  // instance.raw.writeHeader('Date', instance.server._date)
+  // instance.raw.writeHeader('Date', new Date().toUTCString())
 
-  forEach(instance._headers, ([name, value]) => {
-    instance.res.writeHeader(name, value)
+  forEach(response._headers, ([name, value]) => {
+    response.raw.writeHeader(name, value)
   })
 
-  instance.headersSent = true
+  response.headersSent = true
 }
 
-const writeHead = (instance, headers) => {
+const writeHead = (response, headers) => {
   forEach(headers, (value, name) => {
-    instance.setHeader(name, value)
+    response.setHeader(name, value)
   })
 }
 

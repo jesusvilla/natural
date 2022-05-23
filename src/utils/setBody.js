@@ -7,6 +7,7 @@ import getParams from './queryparams.js'
 
 const REGEX_BOUNDARY = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i
 const REGEX_FORM = /name="(\w+)(\[\])?"(?:; filename="(.+)")?/
+const ERROR_TOO_LARGE = 'request entity too large'
 
 const bodyLookup = (request, { tmpDir, maxFileSize, maxBodySize }, cb) => {
   const contentType = request.headers['content-type']
@@ -97,7 +98,7 @@ const bodyLookup = (request, { tmpDir, maxFileSize, maxBodySize }, cb) => {
 
 const sendErrorBody = (request, response, body, maxBodySize) => {
   if (body.length > maxBodySize) {
-    const BodyError = new Error('request entity too large')
+    const BodyError = new Error(ERROR_TOO_LARGE)
     BodyError.status = 413
     // request.destroy()
     response.error(BodyError)

@@ -18,10 +18,7 @@ module.exports = (test) => {
 
   test.serial('POST: /user', async (t) => {
     const response = await request('http://localhost:3000/user', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json'
-      }
+      method: 'POST'
     })
     t.is(response.statusCode, 200)
     t.is(await response.body.text(), '')

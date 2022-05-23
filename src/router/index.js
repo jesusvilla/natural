@@ -32,9 +32,9 @@ const DEFAULT_ROUTE = (request, response) => {
 }
 
 const ON_ERROR = (error, request, response) => {
+  console.error(error)
   response.statusCode = 400
   response.end(`Error: ${error.message}`)
-  console.error(error)
 }
 
 class Cache {
@@ -218,9 +218,10 @@ class NaturalRouter extends BaseRouter {
 
   async lookup (request, response) {
     const infoURL = request.url.split('?')
-    const match = this._find(request.method, infoURL[0])
 
     try {
+      const match = this._find(request.method, infoURL[0])
+
       if (!match || match.handlers.length === 0) {
         return this.config.defaultRoute(request, response)
       }

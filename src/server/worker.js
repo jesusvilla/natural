@@ -18,6 +18,33 @@ const cachedObject = ({ context, name, cb, freeze }) => {
   return context[name]
 }
 
+const getBody = async (wRequest) => {
+  const contentType = wRequest.headers.get('content-type')
+
+  if (contentType === null) {
+    return {}
+  }
+
+  if (contentType.includes('application/json')) {
+    return wRequest.json()
+  } else if (contentType.includes('application/text')) {
+    return wRequest.text()
+  } else if (contentType.includes('text/html')) {
+    return wRequest.text()
+  } else if (contentType.includes('form')) {
+    const formData = await wRequest.formData()
+    const body = {}
+    for (const entry of formData.entries()) {
+      body[entry[0]] = entry[1]
+    }
+    return body
+  } else {
+    if (wRequest.body && wRequest.body instanceof ReadableStream) {
+      return wRequest.json()
+    }
+  }
+}
+
 export class ServerRequest {
   constructor (req) {
     this.raw = req
@@ -26,29 +53,6 @@ export class ServerRequest {
       url: new URL(this.raw.url)
     }
     this.url = this._context.url.pathname + '?' + this._context.url.search
-  }
-
-  async _getBody () {
-    const contentType = this.raw.headers.get('content-type')
-
-    if (contentType.includes('application/json')) {
-      return await this.raw.json()
-    } else if (contentType.includes('application/text')) {
-      return this.raw.text()
-    } else if (contentType.includes('text/html')) {
-      return this.raw.text()
-    } else if (contentType.includes('form')) {
-      const formData = await this.raw.formData()
-      const body = {}
-      for (const entry of formData.entries()) {
-        body[entry[0]] = entry[1]
-      }
-      return JSON.stringify(body)
-    } else {
-      if (this.raw.body && this.raw.body instanceof ReadableStream) {
-        return await this.raw.json()
-      }
-    }
   }
 
   get headers () {
@@ -145,7 +149,12 @@ class Server {
       const response = new this.config.ServerResponse(wReq)
 
       if (hasBody(request.method)) {
-        request.body = await request._getBody()
+        try {
+          request.body = await getBody(request.raw)
+        } catch (error) {
+          console.error(error)
+          request.body = {}
+        }
       } else {
         request.body = {}
       }

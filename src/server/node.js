@@ -5,12 +5,12 @@ import setBody from '../utils/setBody.js'
 import { isUndefined, hasBody } from '../utils/is.js'
 
 export const createServer = (config, cb) => {
-  const handler = (request, response) => {
+  const handler = async (request, response) => {
     if (hasBody(request.method)) {
       setBody(config.router, request, response)
     } else {
       request.body = {}
-      cb(request, response)
+      await cb(request, response)
     }
   }
 
