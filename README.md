@@ -22,10 +22,8 @@ $ npm i -S natural-framework
 
 NaturalRouter
 ```js
-import NaturalRouter from 'natural-framework/lib/router'
-import * as HttpServer from 'natural-framework/lib/router/server/uws'
-// for Workers Cloudflare use:
-// import * as HttpServer from 'natural-framework/lib/router/server/worker'
+import NaturalRouter from 'natural-framework/router'
+import * as HttpServer from 'natural-framework/server/uws'
 
 function createRoutes (router) {
   router
@@ -69,7 +67,7 @@ function createRoutes (router) {
 
 async function bootstrap () {
   const router = new NaturalRouter({
-    http: HttpServer
+    server: HttpServer
     /* ssl: {
       key: path.join(__dirname, './security/cert.key'),
       cert: path.join(__dirname, './security/cert.pem')
@@ -87,15 +85,70 @@ async function bootstrap () {
 bootstrap()
 ```
 
+NaturalRouter (Workers Cloudflare)
+```js
+import NaturalRouter from 'natural-framework/router'
+import * as HttpServer from 'natural-framework/server/worker'
+
+function createRoutes (router) {
+  router
+    .get('/', (_, response) => {
+      response.end('')
+    })
+    .get('/user/:id', (request, response) => {
+      response.end(request.params.id)
+    })
+    .post('/user', (request, response) => {
+      response.end('')
+    })
+    .route({
+      url: '/test/simple/:id',
+      method: 'GET',
+      type: 'json',
+      handler: (request, response) => {
+        // request.params, request.query, request.body, request.files
+        response.send({ id: request.params.id }, 'json')
+      }
+    })
+
+  /* router.route({
+    url: '/meet/auth',
+    method: 'GET',
+    type: 'json',
+    handler: (request, response) => {
+      const params = Object.assign({}, request.params, request.query)
+      response.send(params)
+    }
+  }) */
+
+  // or
+  /*
+  router.on('GET', '/station/test/simple/:id', (request, response) => {
+    // request.params, request.query, request.body, request.files
+    response.send({ id: request.params.id }, 'json')
+  })
+  */
+}
+
+const router = new NaturalRouter({
+  server: HttpServer
+}
+
+export default {
+  fetch: router.run()
+}
+```
+
+
 NaturalJS
 ```js
 import NaturalJS from 'natural-framework'
-import * as HttpServer from 'natural-framework/lib/router/server/uws'
+import * as HttpServer from 'natural-framework/server/uws'
 import station from './station'
 
 async function bootstrap () {
   const app = new NaturalJS({
-    http: HttpServer,
+    server: HttpServer,
     modules: {
       station
     }
@@ -182,7 +235,6 @@ $ npm run dev
 ## ToDo
 
  - Providers: Services, Models, ...
- - Serverless...
 
 License
 ----
