@@ -7,12 +7,12 @@ const serials = require('./serials.js')
 // @doc: https://miniflare.dev/get-started/api#reference
 
 test.before(async (t) => {
-  const mf = new Miniflare({
+  const server = new Miniflare({
     scriptPath: './example/dist/router.worker.bundle.js',
     modules: true,
     port: 3000
   })
-  t.context.server = await mf.startServer()
+  t.context.server = await server.startServer()
 })
 
 test.after.always((t) => {

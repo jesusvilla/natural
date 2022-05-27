@@ -3,8 +3,9 @@ import https from 'https'
 import { readFileSync } from 'fs'
 import setBody from '../utils/setBody.js'
 import { isUndefined, hasBody } from '../utils/is.js'
+import { NOOP } from '../utils/constants.js'
 
-export const createServer = (config, cb) => {
+export const createServer = (config, cb = NOOP) => {
   const handler = async (request, response) => {
     if (hasBody(request.method)) {
       setBody(config.router, request, response)

@@ -1,7 +1,7 @@
 import { hasBody } from '../utils/is.js'
 import { toLowerCase } from '../utils/string.js'
+import { NOOP } from '../utils/constants.js'
 
-const NOOP = () => {}
 const addEvent = globalThis.addEventListener || NOOP
 
 /*

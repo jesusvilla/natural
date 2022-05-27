@@ -1,14 +1,13 @@
 import uWS from 'uWebSockets.js'
 import { STATUS_CODES } from 'http'
-import EventEmitter from 'events'
-// import EventEmitter from '../utils/EventEmitter.js'
+// import EventEmitter from 'events'
+import EventEmitter from '../utils/EventEmitter.js'
 // import { Writable, Readable } from 'stream'
 import { toString, toLowerCase } from '../utils/string.js'
 import { forEach } from '../utils/object.js'
 import { isUndefined, hasBody } from '../utils/is.js'
 import setBody from '../utils/setBody.js'
-
-const NOOP = () => {}
+import { NOOP } from '../utils/constants.js'
 
 /* const toBuffer = (ab) => {
   const buf = Buffer.alloc(ab.byteLength)
@@ -108,7 +107,7 @@ export class ServerRequest extends EventEmitter /* extends Readable */ {
 
   // _read () {}
 
-  getRawHeaders () {
+  get rawHeaders () {
     const raw = []
     this.raw.forEach((header, value) => {
       raw.push(header, value)
