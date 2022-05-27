@@ -85,10 +85,13 @@ async function bootstrap () {
 bootstrap()
 ```
 
-NaturalRouter (Workers Cloudflare)
+NaturalRouter (Workers Cloudflare, AWS Lambda, Google Cloud Functions)
+(Yeah, Same code for any serverless!!)
 ```js
 import NaturalRouter from 'natural-framework/router'
-import * as HttpServer from 'natural-framework/server/worker'
+import * as HttpServer from 'natural-framework/server/worker' // for Workers Cloudflare
+// import * as HttpServer from 'natural-framework/server/lambda' // for AWS Lambda
+// import * as HttpServer from 'natural-framework/server/function' // Google Cloud Functions
 
 function createRoutes (router) {
   router
