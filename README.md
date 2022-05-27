@@ -6,7 +6,7 @@ Fastest Framework for Node.js. Written in pure javascript (ES6+)
   - Pure native HTTP Server.
   - Based on Polka, Restana, Fastify, Express (for the creation of the Router).
   - Based on NestJS (framework concepts and abstraction).
-  - Support Serverless: Workers Cloudflare, Coming Soon: AWS Lambda, Google Cloud Functions
+  - Support Serverless: Workers Cloudflare, AWS Lambda, Google Cloud Functions
 
 ## Requirements
 Node.js v14+ (v16+ for Workers)
