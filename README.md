@@ -20,7 +20,7 @@ $ npm i -S natural-framework
 ## Example
 > View examples folder
 
-### NaturalRouter
+### NaturalRouter (Local Server)
 ```js
 import NaturalRouter from 'natural-framework/router'
 import * as HttpServer from 'natural-framework/server/uws'
@@ -86,8 +86,8 @@ async function bootstrap () {
 bootstrap()
 ```
 
-### NaturalRouter (Workers Cloudflare, AWS Lambda, Google Cloud Functions)
-> (Yeah, Same code for any serverless!!)
+### NaturalRouter (Serverless)
+> Workers Cloudflare, AWS Lambda, Google Cloud Functions (Yeah, Same code for any serverless!!)
 ```js
 import NaturalRouter from 'natural-framework/router'
 import * as HttpServer from 'natural-framework/server/worker' // for Workers Cloudflare
@@ -143,8 +143,7 @@ export default {
 }
 ```
 
-
-NaturalJS
+### NaturalJS
 ```js
 import NaturalJS from 'natural-framework'
 import * as HttpServer from 'natural-framework/server/uws'
