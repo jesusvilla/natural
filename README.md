@@ -24,6 +24,7 @@ NaturalRouter
 ```js
 import NaturalRouter from 'natural-framework/router'
 import * as HttpServer from 'natural-framework/server/uws'
+// import * as HttpServer from 'natural-framework/server/node' // for Node.js native application
 
 function createRoutes (router) {
   router
@@ -86,56 +87,56 @@ bootstrap()
 ```
 
 NaturalRouter (Workers Cloudflare, AWS Lambda, Google Cloud Functions)
-(Yeah, Same code for any serverless!!)
+> (Yeah, Same code for any serverless!!)
 ```js
 import NaturalRouter from 'natural-framework/router'
 import * as HttpServer from 'natural-framework/server/worker' // for Workers Cloudflare
 // import * as HttpServer from 'natural-framework/server/lambda' // for AWS Lambda
 // import * as HttpServer from 'natural-framework/server/function' // Google Cloud Functions
 
-function createRoutes (router) {
-  router
-    .get('/', (_, response) => {
-      response.end('')
-    })
-    .get('/user/:id', (request, response) => {
-      response.end(request.params.id)
-    })
-    .post('/user', (request, response) => {
-      response.end('')
-    })
-    .route({
-      url: '/test/simple/:id',
-      method: 'GET',
-      type: 'json',
-      handler: (request, response) => {
-        // request.params, request.query, request.body, request.files
-        response.send({ id: request.params.id }, 'json')
-      }
-    })
-
-  /* router.route({
-    url: '/meet/auth',
-    method: 'GET',
-    type: 'json',
-    handler: (request, response) => {
-      const params = Object.assign({}, request.params, request.query)
-      response.send(params)
-    }
-  }) */
-
-  // or
-  /*
-  router.on('GET', '/station/test/simple/:id', (request, response) => {
-    // request.params, request.query, request.body, request.files
-    response.send({ id: request.params.id }, 'json')
-  })
-  */
-}
-
 const router = new NaturalRouter({
   server: HttpServer
 }
+
+router
+  .get('/', (_, response) => {
+    response.end('')
+  })
+  .get('/user/:id', (request, response) => {
+    response.end(request.params.id)
+  })
+  .post('/user', (request, response) => {
+    response.end('')
+  })
+  .route({
+    url: '/test/simple/:id',
+    method: 'GET',
+    type: 'json',
+    handler: (request, response) => {
+      // request.params, request.query, request.body
+      return { id: request.params.id }
+      // or: response.send({ id: request.params.id }, 'json')
+    }
+  })
+
+  /* router.route({
+    url: '/test/simple/:id',
+    method: 'POST',
+    type: 'json',
+    handler: (request, response) => {
+      const params = Object.assign({}, request.params, request.query, request.body)
+      response.send(params)
+    }
+  })
+
+  // or
+
+  router.on('POST', '/test/simple/:id', (request, response) => {
+    const params = Object.assign({}, request.params, request.query, request.body)
+    response.send(params)
+  })
+
+  */
 
 export default {
   fetch: router.run()
