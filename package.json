@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib/server.js",
   "engines": {
-    "node": ">=14.x"
+    "node": ">=16.x"
   },
   "files": [
     "LICENSE",
@@ -65,7 +65,7 @@
   },
   "dependencies": {
     "fastest-validator": "^1.4.2",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.8.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.15.0"
   },
   "standard": {
     "parser": "babel-eslint"
